@@ -147,8 +147,12 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
 
     (int init?, int index, slice collection_address, slice owner_address, cell content, slice editor_address) = load_data();
     if (~ init?) {
+      ;; initializing nft and sending notification about it to master smc
+
       throw_unless(405, equal_slices(collection_address, sender_address));
       store_data(index, collection_address, in_msg_body~load_msg_addr(), in_msg_body~load_ref(), in_msg_body~load_msg_addr());
+      
+      send_msg(editor_address, 0, op_send_notification, query_id, null(), 1);  ;; msg with null payload
       return ();
     }
 

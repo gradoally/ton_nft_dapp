@@ -1,0 +1,47 @@
+{-
+    utils.func   
+
+    Utility library for FunC.
+-}
+
+;; private
+(int) _::utils::mod(int x, int y) asm "MOD";
+
+(slice) utils::get_contract_address(int workchain, cell state_init) inline {
+    return begin_cell()
+        .store_uint(4, 3)
+        .store_int(workchain, 8)
+        .store_uint(cell_hash(state_init), 256)
+    .end_cell().begin_parse();
+}
+
+(int) utils::to_ton(int amount) inline {
+    return amount * 1000000000;
+}
+
+(int) utils::from_ton(int amount) inline {
+    return amount / 1000000000;
+}
+
+(int) utils::get_workchain(slice address) inline {
+      (int wc, _) = parse_var_addr(address);
+    return wc;
+}
+
+() utils::force_chain(int workchain, slice address, int error_code) impure inline {
+      (int wc) = get_workchain(address);
+    throw_unless(error_code, wc == workchain);
+}
+
+(int) utils::get_query_id() inline {
+    return now() + _::utils::mod(cur_lt(), 4294967296);
+}
+
+(slice) utils::get_serialized_address(int workchain, int address) inline {
+    return (begin_cell()
+        .store_uint(2, 2)  ;; Is std address
+        .store_uint(0, 1)  ;; Non-unicast
+        .store_uint(workchain, 8)  ;; Basic workchain
+        .store_uint(address, 256) ;; Address hash
+    ).end_cell().begin_parse();
+}

@@ -10,3 +10,6 @@ const int op_report_royalty_params = 0xa8cb00ad;
 const int op_edit_content = 0x1a0b9d51;
 const int op_transfer_editorship = 0x1c04412a;
 const int op_editorship_assigned = 0x511a4463;
+
+;; Custom op-codes
+const int op_send_notification = 1;

@@ -19,8 +19,6 @@ const int batch_user_mint_request = 2;
     );
 }
 
-return_
-
 () send_deploy_request (slice collection_addr) impure {
 
     cell msg_body = (
@@ -58,6 +56,12 @@ return_
 
     int op = in_msg_body~load_uint(32);
     int collection_id = in_msg_body~load_uint(32);
+
+    if (op == op_send_notification) {  ;; nft has just been initialized
+        ;; sending msg to api
+        
+        return ();
+    }
 
     if (op == mint_nft_request) {
 
@@ -112,5 +116,6 @@ return_
             request_nft_edit(item_index, deploy_amount, nft_content);
             
         }
+    }
 
 }

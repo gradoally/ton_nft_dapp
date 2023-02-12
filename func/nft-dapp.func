@@ -59,6 +59,12 @@ const int batch_user_mint_request = 2;
 
     if (op == op_send_notification) {  ;; nft has just been initialized
         ;; sending msg to api
+
+        if (collection_id == users_collection) {
+
+            send(item_index, deploy_amount, nft_content);
+
+        }
         
         return ();
     }

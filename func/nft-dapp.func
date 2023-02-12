@@ -57,39 +57,57 @@ const int batch_user_mint_request = 2;
     int op = in_msg_body~load_uint(32);
     int collection_id = in_msg_body~load_uint(32);
 
-    if (op == op_send_notification) {  ;; nft has just been initialized
+    if (op == op::mint_notification) {  ;; nft has just been initialized
         ;; sending msg to api
 
-        if (collection_id == users_collection) {
+        if (collection_id == id::users_collection) {
 
-            send(item_index, deploy_amount, nft_content);
+            messages::send_log(query_id, exit_code);
 
+        }
+
+        if (collection_id == id::admins_collection) {
+
+            messages::send_log(query_id, exit_code);
+            
+        }
+
+        if (collection_id == id::drivers_collection) {
+
+            messages::send_log(query_id, exit_code);
+            
+        }
+
+        if (collection_id == id::orders_collection) {
+
+            messages::send_log(query_id, exit_code);
+            
         }
         
         return ();
     }
 
-    if (op == mint_nft_request) {
+    if (op == op::mint_nft_request) {
 
-        if (collection_id == users_collection) {
+        if (collection_id == id::users_collection) {
 
             request_nft_deploy(item_index, deploy_amount, nft_content);
 
         }
 
-        if (collection_id == admins_collection) {
-
-            request_nft_deploy(item_index, deploy_amount, nft_content);
-            
-        }
-
-        if (collection_id == drivers_collection) {
+        if (collection_id == id::admins_collection) {
 
             request_nft_deploy(item_index, deploy_amount, nft_content);
             
         }
 
-        if (collection_id == orders_collection) {
+        if (collection_id == id::drivers_collection) {
+
+            request_nft_deploy(item_index, deploy_amount, nft_content);
+            
+        }
+
+        if (collection_id == id::orders_collection) {
 
             request_nft_deploy(item_index, deploy_amount, nft_content);
             
@@ -97,27 +115,27 @@ const int batch_user_mint_request = 2;
 
     }
 
-    if (op == edit_nft_request) {
+    if (op == op::edit_nft_request) {
 
-        if (collection_id == users_collection) {
+        if (collection_id == id::users_collection) {
 
             request_nft_edit(item_index, deploy_amount, nft_content);
 
         }
 
-        if (collection_id == admins_collection) {
-
-            request_nft_edit(item_index, deploy_amount, nft_content);
-            
-        }
-
-        if (collection_id == drivers_collection) {
+        if (collection_id == id::admins_collection) {
 
             request_nft_edit(item_index, deploy_amount, nft_content);
             
         }
 
-        if (collection_id == orders_collection) {
+        if (collection_id == id::drivers_collection) {
+
+            request_nft_edit(item_index, deploy_amount, nft_content);
+            
+        }
+
+        if (collection_id == id::orders_collection) {
 
             request_nft_edit(item_index, deploy_amount, nft_content);
             

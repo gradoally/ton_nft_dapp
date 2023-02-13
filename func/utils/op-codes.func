@@ -11,5 +11,17 @@ const int op_edit_content = 0x1a0b9d51;
 const int op_transfer_editorship = 0x1c04412a;
 const int op_editorship_assigned = 0x511a4463;
 
+;; SBT
+int op::request_owner() asm "0xd0c3bfea PUSHINT";
+int op::owner_info() asm "0x0dd607e3 PUSHINT";
+
+int op::prove_ownership() asm "0x04ded148 PUSHINT";
+int op::ownership_proof() asm "0x0524c7ae PUSHINT";
+int op::ownership_proof_bounced() asm "0xc18e86d2 PUSHINT";
+
+int op::destroy() asm "0x1f04537a PUSHINT";
+int op::revoke() asm "0x6f89f5e3 PUSHINT";
+int op::take_excess() asm "0xd136d3b3 PUSHINT";
+
 ;; Custom op-codes
-const int op_send_notification = 1;
+const int mint_notification = 1;

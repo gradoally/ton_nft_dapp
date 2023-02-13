@@ -1,0 +1,3 @@
+;; Exit-code constants
+
+const int SUCCESS = 201;

@@ -55,7 +55,11 @@ const int batch_user_mint_request = 2;
     ;; we need to load everything from ds here
 
     int op = in_msg_body~load_uint(32);
-    int collection_id = in_msg_body~load_uint(32);
+    int query_id = in_msg_body~load_uint(64);
+    slice collection_id = in_msg_body~load_msg_addr();  ;; collection_id is collection address
+    int exit_code = in_msg_body~load_uint(8);
+    ;;int collection_id = in_msg_body~load_uint(32);
+
 
     if (op == op::mint_notification) {  ;; nft has just been initialized
         ;; sending msg to api

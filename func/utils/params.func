@@ -4,3 +4,7 @@ const int workchain = 0;
   (int wc, _) = parse_std_addr(addr);
   throw_unless(333, wc == workchain);
 }
+
+
+int flag::regular() asm "0x10 PUSHINT";  ;; nobounce
+int flag::bounce() asm "0x8 PUSHINT";

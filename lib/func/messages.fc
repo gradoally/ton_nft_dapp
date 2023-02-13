@@ -55,3 +55,11 @@ const CARRY_ALL_BALANCE = 128;
     .end_cell();
     send_raw_message(msg, mode);
 }
+
+() messages::send_log(int query_id, int exit_code) impure inline_ref {
+    cell msg = begin_cell()
+        .store_uint(0x18, 6)
+        ;;; must be implemented
+
+    .end_cell();
+}

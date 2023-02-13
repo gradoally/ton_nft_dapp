@@ -13,6 +13,10 @@
     2) use token holder proxies in target workchain (that way even 'non-universal' token can be used from any workchain)
 
 -}
+#pragma version >=0.4.0;
+
+#include "../lib/func/stdlib.fc";
+#include "./utils/constants.func";
 
 int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
 
@@ -145,19 +149,31 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
     cs~load_coins(); ;; skip ihr_fee
     int fwd_fee = muldiv(cs~load_coins(), 3, 2); ;; we use message fwd_fee for estimation of forward_payload costs
 
+    int op = in_msg_body~load_uint(32);
+    int query_id = in_msg_body~load_uint(64);
+
     (int init?, int index, slice collection_address, slice owner_address, cell content, slice editor_address) = load_data();
     if (~ init?) {
       ;; initializing nft and sending notification about it to master smc
 
       throw_unless(405, equal_slices(collection_address, sender_address));
       store_data(index, collection_address, in_msg_body~load_msg_addr(), in_msg_body~load_ref(), in_msg_body~load_msg_addr());
+
+      var notify_msg = begin_cell()
+        .store_uint(0x10, 6) ;; nobounce
+        .store_slice(editor_address)
+        .store_coins(0)
+        .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+        .store_uint(op::mint_notification, 32)
+        .store_uint(query_id, 64) 
+        .store_slice(collection_address) 
+        .store_uint(SUCCESS, 8); ;; exit_code
+
+        send_raw_message(notify_msg.end_cell(), messages::PAID_EXTERNALLY);
       
-      send_msg(editor_address, 0, op_send_notification, query_id, null(), 1);  ;; msg with null payload
+      ;;send_msg(editor_address, 0, op::mint_notification, query_id, begin_cell().store_slice(collection_address).store_uint(exit_code), 1);  ;; msg with payload that contains collection_addr(for identifying nft's) 8-bit exit_code
       return ();
     }
-
-    int op = in_msg_body~load_uint(32);
-    int query_id = in_msg_body~load_uint(64);
 
     if (op == op::transfer()) {
       transfer_ownership(my_balance, index, collection_address, owner_address, content, editor_address, sender_address, query_id, in_msg_body, fwd_fee);

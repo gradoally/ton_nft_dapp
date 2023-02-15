@@ -4,8 +4,9 @@
 #pragma version >=0.4.0;
 
 #include ".../lib/func/stdlib.fc";
-#include "../utils/constants.func";
-#include "../utils/params.func";
+#include "../utils/constants.fc";
+#include "../utils/params.fc";
+#include "../utils/flags.fc";
 
 int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
 ;;
@@ -18,7 +19,6 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
 ;;  MsgAddressInt authority_address
 ;;  MsgAddressInt editor_address
 ;;  uint64 revoked_at
-;;
 
 global int storage::index;
 global int init?;
@@ -139,17 +139,21 @@ global int storage::revoked_at;
 
         store_data();
 
-        var notify_msg = begin_cell()
-            .store_uint(flag::regular(), 6) ;; nobounce
-            .store_slice(editor_address)
-            .store_coins(0)
-            .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
-            .store_uint(op::mint_notification, 32)
-            .store_uint(query_id, 64) 
-            .store_slice(storage::collection_address) 
-            .store_uint(SUCCESS, 8); ;; exit_code
+        ;; msg with payload that contains collection_addr(for identifying nft's) 8-bit exit_code
 
-        send_raw_message(notify_msg.end_cell(), messages::PAID_EXTERNALLY);
+        send_msg(
+
+            flag::regular(), 
+            storage::editor_address, 
+            0, 
+            op::mint_notification, 
+            query_id, 
+            begin_cell().store_slice(storage::collection_address).store_uint(SUCCESS, 32), 
+            PAID_EXTERNALLY
+
+        );  
+
+
         return ();
     }
 
@@ -240,6 +244,19 @@ global int storage::revoked_at;
         throw_unless(410, equal_slices(sender_address, editor_address));
         storage::content = in_msg_body~load_ref();
         store_data();
+
+        send_msg(
+
+            flag::regular(), 
+            storage::editor_address, 
+            0, 
+            op::edit_notification, 
+            query_id, 
+            begin_cell().store_slice(storage::collection_address).store_uint(SUCCESS, 32), 
+            PAID_EXTERNALLY
+
+        );
+
         return ();
     }
     if (op == op::transfer_editorship()) {
@@ -247,7 +264,9 @@ global int storage::revoked_at;
         return ();
     }
     if (op == op::transfer()) {
+
         throw(413);
+
     }
     throw(0xffff);
 }

@@ -58,8 +58,9 @@ const CARRY_ALL_BALANCE = 128;
 
 () messages::send_log(int query_id, int exit_code) impure inline_ref {
     cell msg = begin_cell()
-        .store_uint(0x18, 6)
-        ;;; must be implemented
-
+        .store_uint(0x30, 6) ;; ext_out_msg_info$11 src:MsgAddressInt dest:MsgAddressExt
+        .store_uint(0, 64 + 32 + 1 + 1) ;; created_lt:uint64 created_at:uint32 init:(Maybe (Either StateInit ^StateInit)) body:(Either X ^X)
+        .store_uint(query_id, 64)
+        .store_uint(exit_code, 32)
     .end_cell();
 }

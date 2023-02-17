@@ -15,8 +15,9 @@
 -}
 #pragma version >=0.4.0;
 
-#include "../lib/func/stdlib.fc";
-#include "./utils/constants.func";
+#include ".../lib/func/stdlib.fc";
+#include "../utils/constants.fc";
+#include "../utils/flags.fc";
 
 int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
 
@@ -52,20 +53,21 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
     );
 }
 
-() send_msg(slice to_address, int amount, int op, int query_id, builder payload, int send_mode) impure inline {
-  var msg = begin_cell()
-    .store_uint(0x10, 6) ;; nobounce - int_msg_info$0 ihr_disabled:Bool bounce:Bool bounced:Bool src:MsgAddress -> 011000
-    .store_slice(to_address)
-    .store_coins(amount)
-    .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
-    .store_uint(op, 32)
-    .store_uint(query_id, 64);
+() send_msg(int flag, slice to_address, int amount, int op, int query_id, builder payload, int send_mode) impure inline {
 
-  if (~ builder_null?(payload)) {
-    msg = msg.store_builder(payload);
-  }
+    var msg = begin_cell()
+        .store_uint(flag, 6)
+        .store_slice(to_address)
+        .store_coins(amount)
+        .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+        .store_uint(op, 32)
+        .store_uint(query_id, 64);
 
-  send_raw_message(msg.end_cell(), send_mode);
+    if (~ builder_null?(payload)) {
+        msg = msg.store_builder(payload);
+    }
+
+    send_raw_message(msg.end_cell(), send_mode);
 }
 
 () transfer_ownership(int my_balance, int index, slice collection_address, slice owner_address, cell content, slice editor_address, slice sender_address, int query_id, slice in_msg_body, int fwd_fees) impure inline {
@@ -159,20 +161,19 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
       throw_unless(405, equal_slices(collection_address, sender_address));
       store_data(index, collection_address, in_msg_body~load_msg_addr(), in_msg_body~load_ref(), in_msg_body~load_msg_addr());
 
-      var notify_msg = begin_cell()
-        .store_uint(0x10, 6) ;; nobounce
-        .store_slice(editor_address)
-        .store_coins(0)
-        .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
-        .store_uint(op::mint_notification, 32)
-        .store_uint(query_id, 64) 
-        .store_slice(collection_address) 
-        .store_uint(SUCCESS, 8); ;; exit_code
+      send_msg(
 
-        send_raw_message(notify_msg.end_cell(), messages::PAID_EXTERNALLY);
-      
-      ;;send_msg(editor_address, 0, op::mint_notification, query_id, begin_cell().store_slice(collection_address).store_uint(exit_code), 1);  ;; msg with payload that contains collection_addr(for identifying nft's) 8-bit exit_code
-      return ();
+            flag::regular(), 
+            editor_address, 
+            0, 
+            op::mint_notification, 
+            query_id, 
+            begin_cell().store_slice(collection_address).store_uint(SUCCESS, 32), 
+            CARRY_REMAINING_GAS
+
+      );  
+
+        return ();
     }
 
     if (op == op::transfer()) {
@@ -190,6 +191,19 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
     if (op == op::edit_content()) {
       throw_unless(410, equal_slices(sender_address, editor_address));
       store_data(index, collection_address, owner_address, in_msg_body~load_ref(), editor_address);
+
+      send_msg(
+
+            flag::regular(), 
+            editor_address, 
+            0, 
+            op::edit_notification, 
+            query_id, 
+            begin_cell().store_slice(collection_address).store_uint(SUCCESS, 32), 
+            CARRY_REMAINING_GAS
+
+      );
+
       return ();
     }
     throw(0xffff);

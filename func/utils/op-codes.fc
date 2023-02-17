@@ -25,3 +25,4 @@ int op::take_excess() asm "0xd136d3b3 PUSHINT";
 
 ;; Custom op-codes
 const int mint_notification = 1;
+const int edit_notification = 2;

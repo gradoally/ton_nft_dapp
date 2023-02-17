@@ -1,0 +1,21 @@
+"TonUtil.fif" include
+
+now := created_at
+3600 24 * =: duration
+"EQB8EqvPWlUq6g3pZPW9AQU4xLDDh65MxfFT_UStljYuCy_X" constant freelancer_address
+
+freelancer_address
+$>smca 0= abort"Specify valid freelancer address"
+drop
+
+2constant freelancer_raw
+
+."Freelancer address:" freelancer_address type cr
+
+<b "category" $,
+   created_at 64 u,
+   duration 32 u,      
+   freelancer_raw Addr,
+b>
+
+//    ... 

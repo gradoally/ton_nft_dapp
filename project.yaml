@@ -1,10 +1,10 @@
 nft_dapp:
   data: fift/dapp-data.fif
   func:
-    - func/nft-dapp.func
-    - func/utils/helpers.func
-    - func/utils/params.func
-    - func/utils/op-codes.func
+    - func/nft-dapp.fc
+    - func/utils/helpers.fc
+    - func/utils/params.fc
+    - func/utils/op-codes.fc
 
 nft_collection:
   data: fift/collection-data.fif

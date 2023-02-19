@@ -13,8 +13,8 @@ const int batch_user_mint_request = 2;
 (cell) calculate_msg_body_for_deploy_request (int item_index) inline {
     return (
         begin_cell()
-            .store_uint(user_mint_request, 64) ;; op
-            .store_uint(item_index, )
+            .store_uint(user_mint_request, 32) ;; op
+            .store_uint(item_index, 64)
         .end_cell()
     );
 }
@@ -23,7 +23,7 @@ const int batch_user_mint_request = 2;
 
     cell msg_body = (
         begin_cell()
-            .store_uint(user_mint_request, 64)
+            .store_uint(user_mint_request, 32)
             .
     )
 

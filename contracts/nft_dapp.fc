@@ -87,6 +87,8 @@ slice calculate_collection_address(cell state_init) {
 
             messages::send_with_stateinit(amount_for_mint, current_collection_addr, state_init, (begin_cell().end_cell()), NORMAL);
 
+            ;; add collection data to hashmap with collections
+
         }
 
     }

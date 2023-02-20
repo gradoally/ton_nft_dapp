@@ -1,55 +1,82 @@
-# NFT Collection example project
+# TON project template (RFC)
 
-This project allows you to:
+Starter template for a new TON project - FunC contracts, unit tests, compilation and deployment scripts.
 
-1.  Build basic nft collection contract
-2.  Aims to *hopefully* test any nft collection contract for compliance with [NFT Standard](https://github.com/ton-blockchain/TIPs/issues/62)
-3.  Deploy collection contract via `toncli deploy nft_collection`
-4.  Manually deploy NFT item to the collection look (Deploying individual items)
+> This repo is a work in progress and is subject to change
 
-## Building
+## Layout
 
-  Just run `toncli build`
-  Depending on your fift/func build you may want
-  to uncomment some *func/helpers*
+-   `contracts` - contains the source code of all the smart contracts of the project and their dependencies.
+-   `wrappers` - contains the wrapper classes (implementing `Contract` from ton-core) for the contracts, including any [de]serialization primitives and compilation functions.
+-   `tests` - tests for the contracts. Would typically use the wrappers.
+-   `scripts` - contains scripts used by the project, mainly the deployment scripts.   
 
-## Testing
+We ask the community to provide any comments on this layout, the wanted/required changes, or even suggestions for entirely different project structures and/or tool concepts.
 
-  Build project and then: `toncli run_test`  
+PRs are welcome!
 
-  ⚠ If you see `6` error code on all tests - you need to update your binary [more information here](https://github.com/disintar/toncli/issues/72)
+## Repo contents / tech stack
+1. Compiling FunC - [https://github.com/ton-community/func-js](https://github.com/ton-community/func-js)
+2. Testing TON smart contracts - [https://github.com/ton-community/sandbox/](https://github.com/ton-community/sandbox/)
+3. Deployment of contracts is supported with [TON Connect 2](https://github.com/ton-connect/), [Tonhub wallet](https://tonhub.com/) or via a direct `ton://` deeplink
+
+## How to use
+* Clone this repo
+* Run `yarn install`
+
+### Building a contract
+1. Interactively
+   1. Run `yarn blueprint build`
+   2. Choose the contract you'd like to build
+1. Non-interactively
+   1. Run `yarn blueprint build <CONTRACT>`
+   2. example: `yarn blueprint build pingpong`
+
+### Deploying a contract
+1. Interactively
+   1. Run `yarn blueprint run`
+   2. Choose the contract you'd like to deploy
+   3. Choose whether you're deploying on mainnet or testnet
+   4. Choose how to deploy:
+      1. With a TON Connect compatible wallet
+      2. A `ton://` deep link / QR code
+      3. Tonhub wallet
+   5. Deploy the contract
+2. Non-interactively
+   1. Run `yarn blueprint run <CONTRACT> --<NETWORK> --<DEPLOY_METHOD>`
+   2. example: `yarn blueprint run pingpong --mainnet --tonconnect`
+
+### Testing
+1. Run `yarn test`
+
+## Adding your own contract
+1. Run `yarn blueprint create <CONTRACT>`
+2. example: `yarn blueprint create MyContract`
+
+* Write code
+  * FunC contracts are located in `contracts/*.fc`
+    * Standalone root contracts are located in `contracts/*.fc`
+    * Shared imports (when breaking code to multiple files) are in `contracts/imports/*.fc`
+  * Tests in TypeScript are located in `test/*.spec.ts`
+  * Wrapper classes for interacting with the contract are located in `wrappers/*.ts`
+  * Any scripts (including deployers) are located in `scripts/*.ts`
+
+* Build
+  * Builder configs are located in `wrappers/*.compile.ts`
+  * In the root repo dir, run in terminal `yarn blueprint build`
+  * Compilation errors will appear on screen, if applicable
+  * Resulting build artifacts include:
+    * `build/*.compiled.json` - the binary code cell of the compiled contract (for deployment). Saved in a hex format within a json file to support webapp imports
+
+* Test
+  * In the root repo dir, run in terminal `yarn test`
+  * Don't forget to build (or rebuild) before running tests
+  * Tests are running inside Node.js by running TVM in web-assembly using [sandbox](https://github.com/ton-community/sandbox)
+
+* Deploy
+  * Run `yarn blueprint run <deployscript>`
+  * Contracts will be rebuilt on each execution
+  * Follow the on-screen instructions of the deploy script
   
-## Deploying collection contract
-
-  This project consists of two subprojects **nft_item** and **nft_collection**
-  You can see that in the *project.yml*
-  **BOTH** of those have to be built.
-  However, it makes sense to deploy only *nft_collection*.  
-  Prior to deployment you need to check out *fift/collection-data.fif*
-  and change all mock configuration values like collection_content,
-  owner_address Etc.  
-  To deploy run:`toncli deploy -n testnet nft_collection`.  
-  
-## Deploying individual items
-
-  To deploy your own NFT item to the already deployed collection
-  you will need:  
-  
-+   Configure *fift/deploy.fif* script with your own values:
-[Take a look](https://github.com/ton-blockchain/TIPs/issues/64)  
-
-+   Make yourself familiar with process of sending  [internal messages](https://github.com/disintar/toncli/blob/master/docs/advanced/send_fift_internal.md)  
-
-`toncli send -n testnet -a 0.05 -c nft_collection --body fift/deploy.fif`  
-Every next item deployment you should make sure to
-change item index in the *fift/deploy.fif* file ( Yes. Manually for now ).
-
-## Parse nft content
-
-Parse nft for collection (will work only if collection-data is same with on-chain):
-
-`toncli get get_nft_data -a "NFT_ADDRESS" --fift ./fift/parse-data-nft-collection.fif`
-
-Parse nft for single:
-
-`toncli get get_nft_data -a "NFT_ADDRESS" --fift ./fift/parse-data-nft-single.fif`
+# License
+MIT

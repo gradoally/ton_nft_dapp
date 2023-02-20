@@ -1,1 +1,3 @@
-*.pk
+node_modules
+temp
+build

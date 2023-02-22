@@ -3,10 +3,10 @@
 ;;
 #pragma version >=0.4.0;
 
-#include ".../lib/func/stdlib.fc";
-#include "../utils/constants.fc";
-#include "../utils/params.fc";
-#include "../utils/flags.fc";
+#include "./imports/stdlib.fc";
+#include "./utils/constants.fc";
+#include "./utils/params.fc";
+#include "./utils/flags.fc";
 
 int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
 ;;
@@ -126,7 +126,7 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
             flag::regular(), 
             editor_address, 
             0, 
-            op::mint_notification, 
+            "op::mint_notification"c, 
             query_id, 
             begin_cell().store_slice(collection_address).store_uint(SUCCESS, 32), 
             CARRY_REMAINING_GAS
@@ -156,7 +156,7 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
                 .store_slice(sender_address)
                 .store_slice(owner_address)
                 .store_ref(body)
-                .store_uint(evoked_at, 64)
+                .store_uint(revoked_at, 64)
                 .store_uint(with_content, 1);
 
         if (with_content != 0) {

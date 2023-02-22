@@ -8,10 +8,41 @@
 
 #pragma version >=0.4.0;
 #include "imports/stdlib.fc";
-#include "imports/test-libs/message-helpers.fc";
+#include "imports/messages.fc";
 
 const int user_mint_request = 1;
 const int batch_user_mint_request = 2;
+
+(cell, int, int, cell, cell) load_data() inline {
+  var cs = get_data().begin_parse();
+  var res = (cs~load_ref(), cs~load_uint(32), cs~load_uint(256), cs~load_dict(collections), cs~load_dict());
+  cs.end_parse();
+  return res;
+}
+
+() store_data(cell config, int stored_seqno, int public_key, cell collections, cell children_smc_addrs) impure inline {
+  set_data(begin_cell()
+    .store_ref(config)
+    .store_uint(stored_seqno, 32)
+    .store_uint(public_key, 256)
+    .store_dict(collections)
+    .store_dict(children_smc_addrs)
+  .end_cell()
+  );
+}
+
+() store_config_params(int index, cell value) impure {
+  var cs = get_data().begin_parse();
+  var config = cs~load_ref();
+
+  config~idict_set_ref(32, index, value);
+
+  set_data(begin_cell()
+    .store_ref(config)
+    .store_slice(cs)
+  .end_cell()
+  );
+}
 
 slice calculate_collection_address(cell state_init) {
   return begin_cell().store_uint(4, 3)
@@ -46,21 +77,19 @@ slice calculate_collection_address(cell state_init) {
 
 }
 
-() recv_external (int my_balance, int msg_value, cell in_msg_full, slice in_msg_body, int function_selector) impure {
+() recv_external(int msg_value, cell in_msg_full, slice in_msg_body) impure {
 
     var signature = in_msg_body~load_bits(512);
     var cs = in_msg_body;
 
     var msg_segno = cs~load_uint(32);
 
-    slice ds = get_data().begin_parse();
-
-    int stored_seqno = ds~load_uint(32);
-    int public_key = ds~load_uint(256);
+    (_, int stored_seqno, int public_key, cell collections, _ ) = load_data();
 
     throw_unless(33, msg_segno == stored_seqno);
     throw_unless(35, check_signature(slice_hash(in_msg_body), signature, public_key));
 
+    cs.end_parse();
     accept_message();
 
     ;; we need to load everything from ds here
@@ -73,27 +102,63 @@ slice calculate_collection_address(cell state_init) {
 
     slice collections_slice = collections.begin_parse();
 
-    if (op == op::deploy_collections) {
+    ;; Previous deploy collections code
 
-        while (slice_bits(collections_slice) != 0) {
+    ;; if (op == "op::deploy_collections"c) {
 
-            slice current_collection = (collections_slice~load_ref()).begin_parse();
+    ;;     while (slice_bits(collections_slice) != 0) {
+
+    ;;         slice current_collection = (collections_slice~load_ref()).begin_parse();
             
-            cell current_collection_code = current_collection~load_ref();
-            cell current_collection_data = current_collection~load_ref();
+    ;;         cell current_collection_code = current_collection~load_ref();
+    ;;         cell current_collection_data = current_collection~load_ref();
 
+    ;;         cell state_init = generate_init_state_with_data_no_library(current_collection_code, current_collection_data); ;; message_helpers.fc
+    ;;         slice current_collection_addr = calculate_collection_address(state_init);
+
+    ;;         messages::send_with_stateinit(amount_for_mint, current_collection_addr, state_init, (begin_cell().end_cell()), NORMAL);
+
+    ;;         ;; add collection data to hashmap with collections
+
+    ;;     }
+    ;;     save_data(config, stored_seqno + 1, public_key, collections, children_smc_addrs);
+    ;;     commit();
+    ;;     return ();
+
+    ;; }
+
+
+    ;; Deploy Collection
+    if (op == "op::deploy_collection"c) {
+
+        ;;while (slice_bits(collections_slice) != 0) {
+
+            ;; slice current_collection = (collections_slice~load_ref()).begin_parse();
+
+            ;; Taking code and data from in_msg_body ??? Mb from sth else
+            cell current_collection_code = in_msg_body~load_ref();
+            cell current_collection_data = in_msg_body~load_ref();
+        
             cell state_init = generate_init_state_with_data_no_library(current_collection_code, current_collection_data); ;; message_helpers.fc
             slice current_collection_addr = calculate_collection_address(state_init);
 
             messages::send_with_stateinit(amount_for_mint, current_collection_addr, state_init, (begin_cell().end_cell()), NORMAL);
-
+            
             ;; add collection data to hashmap with collections
 
-        }
+            collections~idict_set_ref(64, index, current_collection_addr);            
+
+       ;; }
+
+        save_data(config, stored_seqno + 1, public_key, collections, children_smc_addrs);
+        commit();
+        return ();
 
     }
 
-    if (op == op::mint_notification) {  ;; nft has just been initialized
+
+
+    if (op == "op::mint_notification"c) {  ;; nft has just been initialized
         ;; sending msg to api
 
         if (collection_id == id::freelancers_collection) {
@@ -120,6 +185,8 @@ slice calculate_collection_address(cell state_init) {
             
         }
         
+        save_data(config, stored_seqno + 1, public_key, collections, children_smc_addrs);
+
         return ();
     }
 
@@ -150,7 +217,9 @@ slice calculate_collection_address(cell state_init) {
             request_nft_deploy(amount_for_mint, nft_content);
             
         }
+        save_data(config, stored_seqno + 1, public_key, collections, children_smc_addrs);
 
+        return ();
     }
 
     if (op == op::edit_nft_request) {
@@ -178,10 +247,25 @@ slice calculate_collection_address(cell state_init) {
             request_nft_edit(item_index, deploy_amount, nft_content);
             
         }
+
+        save_data(config, stored_seqno + 1, public_key, collections, children_smc_addrs);
+
+        return ();
     }
 
     if (op == op::change_config) {
 
+        save_data(config, stored_seqno + 1, public_key, collections, children_smc_addrs);
+
+        return ();
     }
 
+    save_data(config, stored_seqno + 1, public_key, collections, children_smc_addrs);
+}
+
+;; Getters
+
+int get_seqno() method_id {
+  (_, int stored_seqno, _, _, _) = load_data();
+  return stored_seqno;
 }

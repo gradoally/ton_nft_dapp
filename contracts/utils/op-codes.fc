@@ -24,5 +24,5 @@ int op::revoke() asm "0x6f89f5e3 PUSHINT";
 int op::take_excess() asm "0xd136d3b3 PUSHINT";
 
 ;; Custom op-codes
-const int mint_notification = 1;
-const int edit_notification = 2;
+const op::mint_notification = "op::mint_notification"c;
+const op::edit_notification = "op::deploy_collections"c;

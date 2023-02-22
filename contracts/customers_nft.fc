@@ -15,9 +15,9 @@
 -}
 #pragma version >=0.4.0;
 
-#include ".../lib/func/stdlib.fc";
-#include "../utils/constants.fc";
-#include "../utils/flags.fc";
+#include "imports/stdlib.fc";
+#include "utils/constants.fc";
+#include "utils/flags.fc";
 
 int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
 

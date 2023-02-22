@@ -77,7 +77,7 @@ slice calculate_collection_address(cell state_init) {
 
 }
 
-() recv_external(int msg_value, cell in_msg_full, slice in_msg_body) impure {
+() recv_external(slice in_msg_body) impure {
 
     var signature = in_msg_body~load_bits(512);
     var cs = in_msg_body;
@@ -254,6 +254,12 @@ slice calculate_collection_address(cell state_init) {
     }
 
     if (op == op::change_config) {
+        ;; Check whether msg_sender is admin must be implemented
+
+        var param_idx = in_msg_body~load_int(32);
+        var param_value = in_msg_body~load_ref();
+        
+        config~idict_set_ref(32, param_idx, param_value);
 
         save_data(config, stored_seqno + 1, public_key, collections, children_smc_addrs);
 
@@ -268,4 +274,23 @@ slice calculate_collection_address(cell state_init) {
 int get_seqno() method_id {
   (_, int stored_seqno, _, _, _) = load_data();
   return stored_seqno;
+}
+
+var get_deployed_collections_addrs() method_id {
+
+    (_, _, _, cell collections, _) = load_data();
+
+    int cursor = 0x7fffffff;  ;; max uint32 
+    var l = null();
+    do {
+        (cursor, slice coll, var f) = collections.udict_get_prev?(32, cursor);
+        if (f) {
+            slice coll_addr = coll~load_msg_addr();
+
+            l = cons(coll_addr, l);
+        }
+
+    } until ( ~ f)
+
+    return l; ;; return list of deployed_collections_addrs
 }

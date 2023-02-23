@@ -1,3 +1,4 @@
 ;; Exit-code constants
 
 const int SUCCESS = 201;
+const int MIN_DEPLOY_AMOUNT = 20000000;

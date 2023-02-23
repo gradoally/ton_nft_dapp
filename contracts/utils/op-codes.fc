@@ -26,3 +26,4 @@ int op::take_excess() asm "0xd136d3b3 PUSHINT";
 ;; Custom op-codes
 const op::mint_notification = "op::mint_notification"c;
 const op::edit_notification = "op::deploy_collections"c;
+const op::deploy_collection = "op::deploy_collection"c;

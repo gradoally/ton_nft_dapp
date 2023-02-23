@@ -2,9 +2,9 @@
 ;;
 ;; int32 seqno
 ;; int256 public_key
-;; cell collections
-;; cell children_contracts_addrs
-;; cell config
+;; slice dapp_owner
+;; int64 next_collection_index
+;; cell collections_dict
 
 #pragma version >=0.4.0;
 #include "imports/stdlib.fc";
@@ -13,22 +13,48 @@
 const int user_mint_request = 1;
 const int batch_user_mint_request = 2;
 
-(cell, int, int, cell, cell) load_data() inline {
-  var cs = get_data().begin_parse();
-  var res = (cs~load_ref(), cs~load_uint(32), cs~load_uint(256), cs~load_dict(collections), cs~load_dict());
-  cs.end_parse();
-  return res;
+(
+  
+  int, 
+  int, 
+  slice, 
+  int, 
+  cell
+
+  ) load_data() inline {
+
+    slice cs = get_data().begin_parse();
+
+    return (
+      cs~load_uint(32), ;; int32 seqno
+      cs~load_uint(256), ;; int256 public_key
+      cs~load_msg_addr(), ;; slice dapp_owner
+      cs~load_uint(64), ;; int64 next_collection_index
+      (cs.slice_bits() > 0 ? cs~load_dict() : new_dict()) ;; cell collections_dict
+    );
+
 }
 
-() store_data(cell config, int stored_seqno, int public_key, cell collections, cell children_smc_addrs) impure inline {
-  set_data(begin_cell()
-    .store_ref(config)
-    .store_uint(stored_seqno, 32)
-    .store_uint(public_key, 256)
-    .store_dict(collections)
-    .store_dict(children_smc_addrs)
-  .end_cell()
-  );
+() save_data(
+
+    int seqno, 
+    int public_key,
+    slice dapp_owner,
+    int next_collection_index
+    cell collections_dict
+
+  ) impure inline {
+
+    set_data(
+      begin_cell()
+        .store_int(seqno, 32) ;; int32 seqno
+        .store_uint(public_key, 256) ;; int256 public_key
+        .store_slice(dapp_owner) ;; slice dapp_owner
+        .store_uint(next_collection_index, 64) ;; int256 public_key
+        .store_dict(collections_dict) ;; cell collections_dict
+      .end_cell()
+    );
+
 }
 
 () store_config_params(int index, cell value) impure {
@@ -37,11 +63,6 @@ const int batch_user_mint_request = 2;
 
   config~idict_set_ref(32, index, value);
 
-  set_data(begin_cell()
-    .store_ref(config)
-    .store_slice(cs)
-  .end_cell()
-  );
 }
 
 slice calculate_collection_address(cell state_init) {
@@ -73,7 +94,69 @@ slice calculate_collection_address(cell state_init) {
 
 }
 
-() main () impure {
+() main (slice in_msg_body, cell in_msg_full) impure {
+
+  slice cs = in_msg_full.begin_parse();
+
+  int flags = cs~load_uint(4);
+  slice sender_address = cs~load_msg_addr();
+
+  if (flags & 1) { return (); } ;; ;; ignore all bounced messages
+  if (in_msg_body.slice_empty?()) { return (); } ;; выкидываем, если пусто в msg_body
+
+  (
+
+    int seqno, 
+    int public_key,
+    slice dapp_owner,
+    int next_collection_index
+    cell collections_dict
+
+  ) = load_data();
+
+  throw_unless(405, equal_slices(collection_address, sender_address));
+
+  if (op == op::change_owner) {
+    
+  }
+
+  if (op == op::withdraw_funds) {
+
+  }
+
+}
+
+(slice) return_collection_addr_by_id (int collection_id) inline {
+
+}
+
+(cell) deploy_collection (cell collections_dict, cell collection_code, cell collection_data) impure {
+
+    cell state_init = generate_init_state_with_data_no_library(current_collection_code, current_collection_data); ;; message_helpers.fc
+    slice current_collection_addr = calculate_collection_address(state_init);
+    messages::send_with_stateinit(amount_for_mint, current_collection_addr, state_init, (begin_cell().end_cell()), NORMAL);
+    cell new_collections_dict = idict_set(collections_dict, 64, index, current_collection_addr);
+    return (new_collections_dict);
+
+}
+
+() mint_notification () {
+  
+}
+
+() mint_nft_request () {
+  
+}
+
+() edit_nft_request () {
+
+}
+
+() edit_dapp_code () {
+
+}
+
+() edit_collection_code () {
 
 }
 
@@ -84,7 +167,15 @@ slice calculate_collection_address(cell state_init) {
 
     var msg_segno = cs~load_uint(32);
 
-    (_, int stored_seqno, int public_key, cell collections, _ ) = load_data();
+    (
+
+      int seqno, 
+      int public_key,
+      slice dapp_owner,
+      int next_collection_index
+      cell collections_dict
+
+    ) = load_data();
 
     throw_unless(33, msg_segno == stored_seqno);
     throw_unless(35, check_signature(slice_hash(in_msg_body), signature, public_key));
@@ -98,175 +189,61 @@ slice calculate_collection_address(cell state_init) {
     int query_id = in_msg_body~load_uint(64);
     slice collection_id = in_msg_body~load_msg_addr();  ;; collection_id is collection address
     int exit_code = in_msg_body~load_uint(8);
-    ;;int collection_id = in_msg_body~load_uint(32);
 
-    slice collections_slice = collections.begin_parse();
-
-    ;; Previous deploy collections code
-
-    ;; if (op == "op::deploy_collections"c) {
-
-    ;;     while (slice_bits(collections_slice) != 0) {
-
-    ;;         slice current_collection = (collections_slice~load_ref()).begin_parse();
-            
-    ;;         cell current_collection_code = current_collection~load_ref();
-    ;;         cell current_collection_data = current_collection~load_ref();
-
-    ;;         cell state_init = generate_init_state_with_data_no_library(current_collection_code, current_collection_data); ;; message_helpers.fc
-    ;;         slice current_collection_addr = calculate_collection_address(state_init);
-
-    ;;         messages::send_with_stateinit(amount_for_mint, current_collection_addr, state_init, (begin_cell().end_cell()), NORMAL);
-
-    ;;         ;; add collection data to hashmap with collections
-
-    ;;     }
-    ;;     save_data(config, stored_seqno + 1, public_key, collections, children_smc_addrs);
-    ;;     commit();
-    ;;     return ();
-
-    ;; }
-
+    int collection_id = in_msg_body~load_uint(64);
 
     ;; Deploy Collection
-    if (op == "op::deploy_collection"c) {
 
-        ;;while (slice_bits(collections_slice) != 0) {
+    if (op == op::deploy_collection) {
 
-            ;; slice current_collection = (collections_slice~load_ref()).begin_parse();
-
-            ;; Taking code and data from in_msg_body ??? Mb from sth else
-            cell current_collection_code = in_msg_body~load_ref();
-            cell current_collection_data = in_msg_body~load_ref();
-        
-            cell state_init = generate_init_state_with_data_no_library(current_collection_code, current_collection_data); ;; message_helpers.fc
-            slice current_collection_addr = calculate_collection_address(state_init);
-
-            messages::send_with_stateinit(amount_for_mint, current_collection_addr, state_init, (begin_cell().end_cell()), NORMAL);
-            
-            ;; add collection data to hashmap with collections
-
-            collections~idict_set_ref(64, index, current_collection_addr);            
-
-       ;; }
-
-        save_data(config, stored_seqno + 1, public_key, collections, children_smc_addrs);
-        commit();
-        return ();
+      collections_dict = deploy_collection(collections_dict, in_msg_body~load_ref(), in_msg_body~load_ref()); ;; loads 
 
     }
 
+    if (op == op::mint_notification) {  ;; nft has just been initialized
 
+      mint_notification(collection_id, item_index, query_id, exit_code);
 
-    if (op == "op::mint_notification"c) {  ;; nft has just been initialized
-        ;; sending msg to api
-
-        if (collection_id == id::freelancers_collection) {
-
-            messages::send_log(query_id, exit_code);
-
-        }
-
-        if (collection_id == id::admins_collection) {
-
-            messages::send_log(query_id, exit_code);
-            
-        }
-
-        if (collection_id == id::drivers_collection) {
-
-            messages::send_log(query_id, exit_code);
-            
-        }
-
-        if (collection_id == id::orders_collection) {
-
-            messages::send_log(query_id, exit_code);
-            
-        }
-        
-        save_data(config, stored_seqno + 1, public_key, collections, children_smc_addrs);
-
-        return ();
     }
 
     if (op == op::mint_nft_request) {
 
-        ;; load data from config
+      mint_nft_request(collection_id, MIN_DEPLOY_AMOUNT, nft_content);
 
-        if (collection_id == id::freelancers_collection) {
-
-            request_nft_deploy(amount_for_mint, nft_content);
-
-        }
-
-        if (collection_id == id::admins_collection) {
-
-            request_nft_deploy(amount_for_mint, nft_content);
-            
-        }
-
-        if (collection_id == id::drivers_collection) {
-
-            request_nft_deploy(amount_for_mint, nft_content);
-            
-        }
-
-        if (collection_id == id::orders_collection) {
-
-            request_nft_deploy(amount_for_mint, nft_content);
-            
-        }
-        save_data(config, stored_seqno + 1, public_key, collections, children_smc_addrs);
-
-        return ();
     }
 
     if (op == op::edit_nft_request) {
 
-        if (collection_id == id::freelancers_collection) {
+      edit_nft_request(collection_id, item_index, deploy_amount, nft_content);
 
-            request_nft_edit(item_index, deploy_amount, nft_content);
-
-        }
-
-        if (collection_id == id::admins_collection) {
-
-            request_nft_edit(item_index, deploy_amount, nft_content);
-            
-        }
-
-        if (collection_id == id::drivers_collection) {
-
-            request_nft_edit(item_index, deploy_amount, nft_content);
-            
-        }
-
-        if (collection_id == id::orders_collection) {
-
-            request_nft_edit(item_index, deploy_amount, nft_content);
-            
-        }
-
-        save_data(config, stored_seqno + 1, public_key, collections, children_smc_addrs);
-
-        return ();
     }
 
-    if (op == op::change_config) {
-        ;; Check whether msg_sender is admin must be implemented
+    if (op == op::edit_dapp_code) {
 
-        var param_idx = in_msg_body~load_int(32);
-        var param_value = in_msg_body~load_ref();
+      edit_dapp_code(
+
+        ;; coming soon
+
+      );
+
+    }
+
+    if (op == op::edit_collection_code) {
+
+      edit_collection_code(
+
+        ;; coming soon
         
-        config~idict_set_ref(32, param_idx, param_value);
+      );
 
-        save_data(config, stored_seqno + 1, public_key, collections, children_smc_addrs);
-
-        return ();
     }
 
-    save_data(config, stored_seqno + 1, public_key, collections, children_smc_addrs);
+    save_data(
+      seqno + 1, 
+      public_key, 
+      collections_dict
+    ); ;; refactor
+
 }
 
 ;; Getters
@@ -283,7 +260,7 @@ var get_deployed_collections_addrs() method_id {
     int cursor = 0x7fffffff;  ;; max uint32 
     var l = null();
     do {
-        (cursor, slice coll, var f) = collections.udict_get_prev?(32, cursor);
+        (cursor, slice coll, var f) = collections.idict_get_prev?(32, cursor);
         if (f) {
             slice coll_addr = coll~load_msg_addr();
 
@@ -293,4 +270,8 @@ var get_deployed_collections_addrs() method_id {
     } until ( ~ f)
 
     return l; ;; return list of deployed_collections_addrs
+}
+
+() get_collection_addr_by_id (int collection_id) method_id {
+  return return_collection_addr_by_id(collection_id);
 }

@@ -9,6 +9,9 @@
 #pragma version >=0.4.0;
 #include "imports/stdlib.fc";
 #include "imports/messages.fc";
+#include "utils/op-codes.fc";
+#include "utils/constants.fc";
+#include "utils/params.fc";
 
 const int user_mint_request = 1;
 const int batch_user_mint_request = 2;
@@ -21,7 +24,7 @@ const int batch_user_mint_request = 2;
   int, 
   cell
 
-  ) load_data() inline {
+  ) load_data() inline_ref {
 
     slice cs = get_data().begin_parse();
 
@@ -40,7 +43,7 @@ const int batch_user_mint_request = 2;
     int seqno, 
     int public_key,
     slice dapp_owner,
-    int next_collection_index
+    int next_collection_index,
     cell collections_dict
 
   ) impure inline {
@@ -57,14 +60,6 @@ const int batch_user_mint_request = 2;
 
 }
 
-() store_config_params(int index, cell value) impure {
-  var cs = get_data().begin_parse();
-  var config = cs~load_ref();
-
-  config~idict_set_ref(32, index, value);
-
-}
-
 slice calculate_collection_address(cell state_init) {
   return begin_cell().store_uint(4, 3)
                      .store_int(workchain(), 8)
@@ -74,24 +69,62 @@ slice calculate_collection_address(cell state_init) {
 }
 
 (cell) calculate_msg_body_for_deploy_request (int item_index) inline {
-    return (
+  return (
         begin_cell()
-            .store_uint(user_mint_request, 32) ;; op
-            .store_uint(item_index, 64)
+          .store_uint(user_mint_request, 32) ;; op
+          .store_uint(item_index, 64)
         .end_cell()
-    );
+  );
 }
 
 () send_deploy_request (slice collection_addr) impure {
 
-    cell msg_body = (
+  cell msg_body = (
         begin_cell()
-            .store_uint(user_mint_request, 32)
-            .
-    )
+          .store_uint(user_mint_request, 32)
+          .
+  )
 
-    send_raw_message(msg, mode);
+  send_raw_message(msg, mode);
 
+}
+
+int balance() method_id {
+  int [balance, _] = get_balance();
+  return balance;
+}
+
+() withdraw(int withdraw_amount) impure {
+
+  throw_unless(407, balance() + MIN_TONS_FOR_STORAGE > withdraw_amount);
+
+  (_, _, slice dapp_owner,  _,  _) = load_data();
+
+  messages::send_empty(withdraw_amount, dapp_owner, NORMAL);
+}
+
+
+() after_code_upgrade(cont old_code) impure method_id(1666);
+
+
+() upgrade_dapp_code(cell new_code) impure {
+
+  set_code(new_code);
+
+  cont old_code = get_c3();
+  set_c3(new_code.begin_parse().bless());
+  after_code_upgrade(old_code);
+
+  throw(0);
+}
+
+() change_owner(slice new_owner_addr) impure {
+
+  (int seqno, int public_key, slice dapp_owner, int next_collection_index, cell collections_dict) = load_data();
+
+  force_chain(new_owner_addr);
+
+  save_data(seqno, public_key, new_owner_addr, next_collection_index, collections_dict);
 }
 
 () main (slice in_msg_body, cell in_msg_full) impure {
@@ -101,94 +134,147 @@ slice calculate_collection_address(cell state_init) {
   int flags = cs~load_uint(4);
   slice sender_address = cs~load_msg_addr();
 
-  if (flags & 1) { return (); } ;; ;; ignore all bounced messages
-  if (in_msg_body.slice_empty?()) { return (); } ;; выкидываем, если пусто в msg_body
+  if (flags & 1) { 
+    return (); 
+  } 
+
+  if (in_msg_body.slice_empty?()) { 
+    return (); 
+  }
 
   (
 
     int seqno, 
     int public_key,
     slice dapp_owner,
-    int next_collection_index
+    int next_collection_index,
     cell collections_dict
 
   ) = load_data();
 
-  throw_unless(405, equal_slices(collection_address, sender_address));
+  throw_unless(405, equal_slices(dapp_owner, sender_address));
+
+  int op = in_msg_body~load_uint(32);
 
   if (op == op::change_owner) {
-    
+
+    change_owner(in_msg_body~load_msg_addr());
+
+    return ();
   }
 
   if (op == op::withdraw_funds) {
 
+    withdraw(in_msg_body~load_coins());
+
+    return ();
   }
 
+  if (op == op::edit_code) {  ;; edit dapp code
+
+    upgrade_dapp_code(in_msg_body~load_ref());
+
+    return ();
+  }
+
+  throw(0xffff);
 }
 
 (slice) return_collection_addr_by_id (int collection_id) inline {
 
+  (_, _, _, _, cell collections_dict) = load_data();
+
+  (slice value, int f) = idict_get?(collections_dict, 64, collection_id);
+
+  return (parse_std_addr(value~load_msg_addr()));
 }
 
-(cell) deploy_collection (cell collections_dict, cell collection_code, cell collection_data) impure {
+(cell) deploy_collection (cell collections_dict, int amount_for_mint, cell collection_code, cell collection_data) impure {
 
-    cell state_init = generate_init_state_with_data_no_library(current_collection_code, current_collection_data); ;; message_helpers.fc
-    slice current_collection_addr = calculate_collection_address(state_init);
-    messages::send_with_stateinit(amount_for_mint, current_collection_addr, state_init, (begin_cell().end_cell()), NORMAL);
-    cell new_collections_dict = idict_set(collections_dict, 64, index, current_collection_addr);
-    return (new_collections_dict);
-
-}
-
-() mint_notification () {
+  cell state_init = generate_init_state_with_data_no_library(current_collection_code, current_collection_data); ;; message_helpers.fc
   
+  slice current_collection_addr = calculate_collection_address(state_init);
+
+  messages::send_with_stateinit(amount_for_mint, current_collection_addr, state_init, (begin_cell().end_cell()), NORMAL);
+
+  cell new_collections_dict = idict_set(collections_dict, 64, index, current_collection_addr);
+
+  return (new_collections_dict);
+
 }
 
-() mint_nft_request () {
+() mint_notification (int collection_id, int item_index, int query_id, int exit_code, slice sender_addr) impure {
+
+  slice collection_address = return_collection_addr_by_id(collection_id);
+
+  cell msg_body = begin_cell().store_uint(query_id, 64).store_uint(item_index, 64).store_uint(exit_code, 8).end_cell();
+
+  messages::send_via_proxy(sender_addr, amount, collection_address, msg_body, CARRY_REMAINING_GAS);
+}
+
+() mint_nft_request (int collection_id, int query_id, int item_index, int amount, cell nft_content, slice sender_addr) impure {
   
-}
+  slice collection_address = return_collection_addr_by_id(collection_id);
 
-() edit_nft_request () {
+  cell msg_body = begin_cell().store_uint(op::deploy_nft_item, 32).store_uint(query_id, 64).store_uint(item_index, 64).store_coins(amount).store_ref(nft_content).end_cell();
 
-}
-
-() edit_dapp_code () {
+  messages::send_via_proxy(sender_addr, 0, collection_address, msg_body, CARRY_REMAINING_GAS);
 
 }
 
-() edit_collection_code () {
+() edit_nft_request (int collection_id, int query_id, int amount, cell nft_content, cell royalty_params, slice sender_addr) impure {
+
+  slice collection_address = return_collection_addr_by_id(collection_id);
+
+  cell msg_body = begin_cell().store_uint(op_edit_content, 32).store_uint(query_id, 64).store_ref(nft_content).store_ref(royalty_params).end_cell();
+  
+  messages::send_via_proxy(sender_addr, amount, collection_address, msg_body, CARRY_REMAINING_GAS);  ;; sender_addr is provided for security
 
 }
 
-() recv_external(slice in_msg_body) impure {
+() edit_collection_code (int collection_id, int query_id, cell new_collection_code, slice sender_addr) impure {
+
+  slice collection_address = return_collection_addr_by_id(collection_id);
+
+  cell msg_body = begin_cell().store_uint(op::edit_code, 32).store_uint(query_id, 64).store_ref(new_collection_code).end_cell();
+
+  messages::send_via_proxy(sender_addr, 0, collection_address, msg_body, CARRY_REMAINING_GAS);
+
+}
+
+() recv_external(slice in_msg_body, cell in_msg_full) impure {
 
     var signature = in_msg_body~load_bits(512);
-    var cs = in_msg_body;
+    slice cs = in_msg_body;
 
-    var msg_segno = cs~load_uint(32);
+    int msg_segno = cs~load_uint(32);
 
     (
 
       int seqno, 
       int public_key,
       slice dapp_owner,
-      int next_collection_index
+      int next_collection_index,
       cell collections_dict
 
     ) = load_data();
 
-    throw_unless(33, msg_segno == stored_seqno);
+    throw_unless(33, msg_segno == seqno);
     throw_unless(35, check_signature(slice_hash(in_msg_body), signature, public_key));
 
     cs.end_parse();
     accept_message();
+    cs~touch();
 
-    ;; we need to load everything from ds here
+    slice msg_full_parsed = in_msg_full.begin_parse();
+
+    msg_full_parsed~skip_bits(4);
+
+    slice sender_address = msg_full_parsed~load_msg_addr();
 
     int op = in_msg_body~load_uint(32);
     int query_id = in_msg_body~load_uint(64);
-    slice collection_id = in_msg_body~load_msg_addr();  ;; collection_id is collection address
-    int exit_code = in_msg_body~load_uint(8);
+   ;; slice collection_id = in_msg_body~load_msg_addr();  ;; collection_id is collection address  Probably should be removed
 
     int collection_id = in_msg_body~load_uint(64);
 
@@ -196,51 +282,39 @@ slice calculate_collection_address(cell state_init) {
 
     if (op == op::deploy_collection) {
 
-      collections_dict = deploy_collection(collections_dict, in_msg_body~load_ref(), in_msg_body~load_ref()); ;; loads 
+      collections_dict = deploy_collection(collections_dict, in_msg_body~load_coins(), in_msg_body~load_ref(), in_msg_body~load_ref());  
 
     }
 
     if (op == op::mint_notification) {  ;; nft has just been initialized
 
-      mint_notification(collection_id, item_index, query_id, exit_code);
+      mint_notification(collection_id, in_msg_body~load_uint(64), query_id, in_msg_body~load_uint(8), sender_address);
 
     }
 
     if (op == op::mint_nft_request) {
 
-      mint_nft_request(collection_id, MIN_DEPLOY_AMOUNT, nft_content);
+      mint_nft_request(collection_id, query_id, in_msg_body~load_uint(64), MIN_DEPLOY_AMOUNT, in_msg_body~load_ref(), sender_address);
 
     }
 
     if (op == op::edit_nft_request) {
 
-      edit_nft_request(collection_id, item_index, deploy_amount, nft_content);
-
-    }
-
-    if (op == op::edit_dapp_code) {
-
-      edit_dapp_code(
-
-        ;; coming soon
-
-      );
+      edit_nft_request(collection_id, query_id, in_msg_body~load_coins(), in_msg_body~load_ref(), in_msg_body~load_ref(), sender_address);
 
     }
 
     if (op == op::edit_collection_code) {
 
-      edit_collection_code(
-
-        ;; coming soon
-        
-      );
+      edit_collection_code(collection_id, query_id, in_msg_body~load_ref(), sender_address);
 
     }
 
     save_data(
       seqno + 1, 
-      public_key, 
+      public_key,
+      dapp_owner,
+      next_collection_index,
       collections_dict
     ); ;; refactor
 
@@ -249,18 +323,18 @@ slice calculate_collection_address(cell state_init) {
 ;; Getters
 
 int get_seqno() method_id {
-  (_, int stored_seqno, _, _, _) = load_data();
-  return stored_seqno;
+  (int seqno, _, _, _, _) = load_data();
+  return seqno;
 }
 
 var get_deployed_collections_addrs() method_id {
 
-    (_, _, _, cell collections, _) = load_data();
+    (_, _, _, _, cell collections_dict) = load_data();
 
     int cursor = 0x7fffffff;  ;; max uint32 
     var l = null();
     do {
-        (cursor, slice coll, var f) = collections.idict_get_prev?(32, cursor);
+        (cursor, slice coll, var f) = collections_dict.idict_get_prev?(32, cursor);
         if (f) {
             slice coll_addr = coll~load_msg_addr();
 

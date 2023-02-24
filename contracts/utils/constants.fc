@@ -2,3 +2,4 @@
 
 const int SUCCESS = 201;
 const int MIN_DEPLOY_AMOUNT = 20000000;
+const int MIN_TONS_FOR_STORAGE = 1000000000; ;; 1 TON

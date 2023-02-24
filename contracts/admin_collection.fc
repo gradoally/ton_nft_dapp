@@ -8,6 +8,13 @@
 ;;           royalty_params:^RoyaltyParams
 ;;           = Storage;
 
+#pragma version >=0.4.0;
+#include "imports/stdlib.fc";
+#include "imports/messages.fc";
+#include "utils/op-codes.fc";
+#include "utils/constants.fc";
+#include "utils/params.fc";
+
 (slice, int, cell, cell, cell) load_data() inline {
   var ds = get_data().begin_parse();
   return (
@@ -67,6 +74,21 @@ slice calculate_nft_item_address(int wc, cell state_init) {
   send_raw_message(msg.end_cell(), 64); ;; carry all the remaining value of the inbound message
 }
 
+
+() after_code_upgrade(cont old_code) impure method_id(1666);
+
+
+() upgrade_collection_code(cell new_code) impure {
+
+  set_code(new_code);
+
+  cont old_code = get_c3();
+  set_c3(new_code.begin_parse().bless());
+  after_code_upgrade(old_code);
+
+  throw(0);
+}
+
 () recv_internal(cell in_msg_full, slice in_msg_body) impure {
     if (in_msg_body.slice_empty?()) { ;; ignore empty messages
         return ();
@@ -92,7 +114,7 @@ slice calculate_nft_item_address(int wc, cell state_init) {
     throw_unless(401, equal_slices(sender_address, owner_address));
 
 
-    if (op == 1) { ;; deploy new nft
+    if (op == op::deploy_nft_item) { ;; deploy new nft
       int item_index = in_msg_body~load_uint(64);
       throw_unless(402, item_index <= next_item_index);
       var is_last = item_index == next_item_index;
@@ -103,6 +125,7 @@ slice calculate_nft_item_address(int wc, cell state_init) {
       }
       return ();
     }
+
     if (op == 2) { ;; batch deploy of new nfts
       int counter = 0;
       cell deploy_list = in_msg_body~load_ref();
@@ -124,15 +147,25 @@ slice calculate_nft_item_address(int wc, cell state_init) {
       save_data(owner_address, next_item_index, content, nft_item_code, royalty_params);
       return ();
     }
+
     if (op == 3) { ;; change owner
       slice new_owner = in_msg_body~load_msg_addr();
       save_data(new_owner, next_item_index, content, nft_item_code, royalty_params);
       return ();
     }
-    if (op == 4) { ;; change content
+
+    if (op == op_edit_content) { ;; change content
       save_data(owner_address, next_item_index, in_msg_body~load_ref(), nft_item_code, in_msg_body~load_ref());
       return ();
     }
+
+    if(op == op::edit_code) {
+      
+      upgrade_collection_code(in_msg_body~load_ref());
+
+      return ();
+    }
+
     throw(0xffff);
 }
 

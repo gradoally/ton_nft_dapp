@@ -64,3 +64,15 @@ const CARRY_ALL_BALANCE = 128;
         .store_uint(exit_code, 32)
     .end_cell();
 }
+
+() messages::send_via_proxy(slice from, int amount, slice to, cell body, int mode) impure inline_ref {
+    cell msg = begin_cell()
+		.store_uint(0x10, 6)
+		.store_slice(to)
+		.store_coins(amount)
+		.store_uint(0, 107)
+		.store_slice(from)
+		.store_ref(body)
+	.end_cell();
+    send_raw_message(msg, mode);
+}

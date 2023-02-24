@@ -8,6 +8,8 @@
 ;;           royalty_params:^RoyaltyParams
 ;;           = Storage;
 
+#include "utils/op-codes.fc";
+
 (slice, int, cell, cell, cell) load_data() inline {
   var ds = get_data().begin_parse();
   return 
@@ -92,7 +94,7 @@ slice calculate_nft_item_address(int wc, cell state_init) {
     throw_unless(401, equal_slices(sender_address, owner_address));
 
 
-    if (op == 1) { ;; deploy new nft
+    if (op == op::deploy_nft_item) { ;; deploy new nft
       int item_index = in_msg_body~load_uint(64);
       throw_unless(402, item_index <= next_item_index);
       var is_last = item_index == next_item_index;
@@ -129,7 +131,7 @@ slice calculate_nft_item_address(int wc, cell state_init) {
       save_data(new_owner, next_item_index, content, nft_item_code, royalty_params);
       return ();
     }
-    if (op == 4) { ;; change content
+    if (op == op_edit_content) { ;; change content
       save_data(owner_address, next_item_index, in_msg_body~load_ref(), nft_item_code, in_msg_body~load_ref());
       return ();
     }

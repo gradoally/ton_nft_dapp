@@ -90,15 +90,18 @@ slice calculate_nft_item_address(int wc, cell state_init) {
 }
 
 () recv_internal(cell in_msg_full, slice in_msg_body) impure {
+
     if (in_msg_body.slice_empty?()) { ;; ignore empty messages
         return ();
     }
+
     slice cs = in_msg_full.begin_parse();
     int flags = cs~load_uint(4);
 
     if (flags & 1) { ;; ignore all bounced messages
         return ();
     }
+
     slice sender_address = cs~load_msg_addr();
 
     int op = in_msg_body~load_uint(32);
@@ -107,7 +110,9 @@ slice calculate_nft_item_address(int wc, cell state_init) {
     var (owner_address, next_item_index, content, nft_item_code, royalty_params) = load_data();
 
     if (op == op::get_royalty_params()) {
+
         send_royalty_params(sender_address, query_id, royalty_params.begin_parse());
+
         return ();
     }
 
@@ -115,47 +120,72 @@ slice calculate_nft_item_address(int wc, cell state_init) {
 
 
     if (op == op::deploy_nft_item) { ;; deploy new nft
+
       int item_index = in_msg_body~load_uint(64);
+
       throw_unless(402, item_index <= next_item_index);
+
       var is_last = item_index == next_item_index;
+
       deploy_nft_item(item_index, nft_item_code, in_msg_body~load_coins(), in_msg_body~load_ref());
+
       if (is_last) {
+
         next_item_index += 1;
+
         save_data(owner_address, next_item_index, content, nft_item_code, royalty_params);
       }
+
       return ();
     }
 
-    if (op == 2) { ;; batch deploy of new nfts
+    if (op == op::batch_nft_deploy) { ;; batch deploy of new nfts
+
       int counter = 0;
+
       cell deploy_list = in_msg_body~load_ref();
+
       do {
+
         var (item_index, item, f?) = deploy_list~udict::delete_get_min(64);
+
         if (f?) {
+
           counter += 1;
+
           if (counter >= 250) { ;; Limit due to limits of action list size
             throw(399);
           }
 
           throw_unless(403 + counter, item_index <= next_item_index);
+
           deploy_nft_item(item_index, nft_item_code, item~load_coins(), item~load_ref());
+
           if (item_index == next_item_index) {
             next_item_index += 1;
           }
         }
+
       } until ( ~ f?);
+
       save_data(owner_address, next_item_index, content, nft_item_code, royalty_params);
+
       return ();
     }
 
-    if (op == 3) { ;; change owner
+    if (op == op::change_collection_owner) { ;; change owner
+
       slice new_owner = in_msg_body~load_msg_addr();
+
       save_data(new_owner, next_item_index, content, nft_item_code, royalty_params);
+
       return ();
     }
 
-    if (op == op_edit_content) { ;; change content
+    if (op == op::change_content) { ;; change content
+
       save_data(owner_address, next_item_index, in_msg_body~load_ref(), nft_item_code, in_msg_body~load_ref());
+
       return ();
     }
 

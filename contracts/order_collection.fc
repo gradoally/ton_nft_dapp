@@ -99,7 +99,7 @@ slice calculate_nft_item_address(int wc, cell state_init) {
     throw_unless(401, equal_slices(sender_address, owner_address));
 
 
-    if (op == 1) { ;; deploy new nft
+    if (op == op::deploy_nft_item) { ;; deploy new nft
 
       deploy_nft_item(next_item_index, nft_item_code, in_msg_body~load_coins(), in_msg_body~load_ref());
       next_item_index += 1;
@@ -109,7 +109,7 @@ slice calculate_nft_item_address(int wc, cell state_init) {
 
     }
     
-    if (op == 2) { ;; batch deploy of new nfts
+    if (op == op::batch_nft_deploy) { ;; batch deploy of new nfts
       int counter = 0;
       cell deploy_list = in_msg_body~load_ref();
       do {
@@ -130,12 +130,12 @@ slice calculate_nft_item_address(int wc, cell state_init) {
       save_data(owner_address, next_item_index, content, nft_item_code, royalty_params);
       return ();
     }
-    if (op == 3) { ;; change owner
+    if (op == op::change_collection_owner) { ;; change owner
       slice new_owner = in_msg_body~load_msg_addr();
       save_data(new_owner, next_item_index, content, nft_item_code, royalty_params);
       return ();
     }
-    if (op == 4) { ;; change content
+    if (op == op::change_content) { ;; change content
       save_data(owner_address, next_item_index, in_msg_body~load_ref(), nft_item_code, in_msg_body~load_ref());
       return ();
     }

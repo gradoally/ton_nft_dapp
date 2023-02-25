@@ -25,9 +25,10 @@ int op::take_excess() asm "0xd136d3b3 PUSHINT";
 
 ;; Custom op-codes
 const op::mint_notification = "op::mint_notification"c;
-const op::edit_notification = "op::deploy_collections"c;
+const op::edit_notification = "op::edit_collections"c;
 const op::deploy_collection = "op::deploy_collection"c;
-
 const op::deploy_nft_item = "op::deploy_nft_item"c;
+const op::batch_nft_deploy = "op::batch_nft_deploy"c;
+const op::change_collection_owner = "op::change_collection_owner"c;
 
 const op::edit_code = 0x4e436f64;  ;; indeed it seems not to be custom

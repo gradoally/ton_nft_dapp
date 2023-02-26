@@ -4,3 +4,6 @@ const int workchain = 0;
   (int wc, _) = parse_std_addr(addr);
   throw_unless(333, wc == workchain);
 }
+
+
+slice null_addr() asm "b{00} PUSHSLICE";

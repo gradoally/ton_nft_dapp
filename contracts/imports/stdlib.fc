@@ -397,6 +397,9 @@ int builder_bits(builder b) asm "BBITS";
 ;;; otherwise the returned value is one plus the maximum of depths of cells referred to from [b].
 int builder_depth(builder b) asm "BDEPTH";
 
+;; Check whether builder [b] is null
+int builder_null?(builder b) asm "ISNULL";
+
 {-
   # Builder primitives
   It is said that a primitive _stores_ a value `x` into a builder `b`

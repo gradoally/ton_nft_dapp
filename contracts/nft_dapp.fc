@@ -184,7 +184,7 @@ int balance() method_id {
 
   (_, _, _, _, cell collections_dict) = load_data();
 
-  (slice value, int f) = idict_get?(collections_dict, 64, collection_id);
+  (slice value, int f) = udict_get?(collections_dict, 64, collection_id);
 
   return (parse_std_addr(value~load_msg_addr()));
 }
@@ -197,7 +197,7 @@ int balance() method_id {
 
   messages::send_with_stateinit(amount_for_mint, current_collection_addr, state_init, (begin_cell().end_cell()), NORMAL);
 
-  cell new_collections_dict = idict_set(collections_dict, 64, index, current_collection_addr);
+  cell new_collections_dict = udict_set(collections_dict, 64, index, current_collection_addr);
 
   return (new_collections_dict);
 
@@ -364,7 +364,7 @@ var get_deployed_collections_addrs() method_id {
     int cursor = 0x7fffffff;  ;; max uint32 
     var l = null();
     do {
-        (cursor, slice coll, var f) = collections_dict.idict_get_prev?(32, cursor);
+        (cursor, slice coll, var f) = collections_dict.udict_get_prev?(32, cursor);
         if (f) {
             slice coll_addr = coll~load_msg_addr();
 

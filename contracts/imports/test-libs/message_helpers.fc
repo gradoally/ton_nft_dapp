@@ -1,3 +1,7 @@
+#pragma version >=0.4.0;
+#include "1.address_helpers.fc";
+#include "../../utils/errors.fc";
+
 builder generate_init_state() impure method_id {
     return begin_cell().store_uint(0, 1) ;; maybe (##5)
             .store_uint(1, 1) ;; Maybe TickTock
@@ -604,7 +608,7 @@ cell generate_external_out_message_relaxed(int ton_amount, int init_state, build
 [int, int, int, slice, slice, int, int, tuple, slice] parse_internal_message(cell message) impure method_id {
     slice cs = message.begin_parse();
 
-    throw_if(error::not_internal_message(), cs~load_uint(1) != 0);
+    throw_if(error::not_internal_message, cs~load_uint(1) != 0);
 
     int ihr_disabled = cs~load_uint(1);
     int bounce = cs~load_uint(1);
@@ -646,7 +650,7 @@ cell generate_external_out_message_relaxed(int ton_amount, int init_state, build
     slice cs = message.begin_parse();
     int msg_info = cs~load_uint(2);
 
-    throw_if(error::not_external_message(), (msg_info != 2) & (msg_info != 3));
+    throw_if(error::not_external_message, (msg_info != 2) & (msg_info != 3));
 
     slice src = cs~load_msg_addr();
     slice to_address = cs~load_msg_addr();

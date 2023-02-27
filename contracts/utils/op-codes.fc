@@ -1,11 +1,11 @@
 const op::transfer = 0x5fcc3d14;
 const op::excesses = 0xd53276db;
 const op::ownership_assigned = 0x05138d91;
-const int op_excesses = 0xd53276db;
+const op_excesses = 0xd53276db;
 const op::get_static_data = 0x2fcb26a2;
 const op::report_static_data = 0x8b771735;
-const int op_get_royalty_params = 0x693d3950;
-const int op_report_royalty_params = 0xa8cb00ad;
+const op_get_royalty_params = 0x693d3950;
+const op_report_royalty_params = 0xa8cb00ad;
 
 ;; NFTEditable
 const op::edit_content = 0x1a0b9d51;
@@ -34,10 +34,10 @@ const op::deploy_collection = "op::deploy_collection"c;
 const op::deploy_nft_item = "op::deploy_nft_item"c;
 const op::batch_nft_deploy = "op::batch_nft_deploy"c;
 const op::change_collection_owner = "op::change_collection_owner"c;
-const op::change_content = "op::change_content"c;
+const op::edit_nft_content = "op::edit_nft_content"c;
+const op::upgrade_collection_code = "op::upgrade_collection_code"c;
 
 const op::change_owner = "op::change_owner"c; ;; change dapp owner
 const op::withdraw_funds = "op::withdraw_funds"c; ;; withdraw funds from dapp
 
-
-const op::edit_code = 0x4e436f64;  ;; indeed it seems not to be custom
+const op::edit_dapp_code = "op::edit_dapp_code"c;

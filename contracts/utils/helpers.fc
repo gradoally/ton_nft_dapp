@@ -220,3 +220,14 @@ forall X -> int is_slice(X x) asm "<{ TRY:<{ SBITS DROP -1 PUSHINT }>CATCH<{ 2DR
 forall X -> int is_tuple(X x) asm "ISTUPLE";
 ;;builder store_builder(builder to, builder from) asm "STBR";
 
+() upgrade_current_contract_code (cell new_code) impure {
+
+  set_code(new_code);
+
+  cont old_code = get_c3();
+  set_c3(new_code.begin_parse().bless());
+
+  throw(0);
+  
+}
+

@@ -1,9 +1,25 @@
-import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, Sender, SendMode } from 'ton-core';
+import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, Dictionary, Sender, SendMode } from 'ton-core';
 
-export type OrderNftConfig = {};
+export type OrderNftConfig = {
+    index: number;
+    collectionAddress: Address;
+    ownerAddress: Address;
+    content: Dictionary<64, Cell>;
+    authorityAddress: Address;
+    editorAddress: Address;
+    revokedAt: number;
+};
 
 export function orderNftConfigToCell(config: OrderNftConfig): Cell {
-    return beginCell().endCell();
+    return beginCell()
+            .storeUint(config.index, 64)
+            .storeAddress(config.collectionAddress)
+            .storeAddress(config.ownerAddress)
+            .storeDict(config.content)
+            .storeAddress(config.authorityAddress)
+            .storeAddress(config.editorAddress)
+            .storeUint(config.revokedAt, 64)
+        .endCell();
 }
 
 export class OrderNft implements Contract {

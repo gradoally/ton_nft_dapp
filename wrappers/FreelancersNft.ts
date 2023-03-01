@@ -1,9 +1,25 @@
 import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, Sender, SendMode } from 'ton-core';
 
-export type FreelancersNftConfig = {};
+export type FreelancersNftConfig = {
+    index: number;
+    collectionAddress: Address;
+    ownerAddress: Address;
+    content: Cell;
+    authorityAddress: Address;
+    editorAddress: Address;
+    revokedAt: number;
+};
 
 export function freelancersNftConfigToCell(config: FreelancersNftConfig): Cell {
-    return beginCell().endCell();
+    return beginCell()
+           .storeUint(config.index, 64)
+           .storeAddress(config.collectionAddress)
+           .storeAddress(config.ownerAddress)
+           .storeRef(config.content)
+           .storeAddress(config.authorityAddress)
+           .storeAddress(config.editorAddress)
+           .storeUint(config.revokedAt, 64)
+        .endCell();
 }
 
 export class FreelancersNft implements Contract {

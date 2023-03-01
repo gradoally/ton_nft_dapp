@@ -1,9 +1,21 @@
 import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, Sender, SendMode } from 'ton-core';
 
-export type AdminCollectionConfig = {};
+export type AdminCollectionConfig = {
+    ownerAddress: Address;
+    nextItemIndex: number;
+    content: Cell;
+    nftItemCode: Cell;
+    royaltyParams: Cell;
+};
 
 export function adminCollectionConfigToCell(config: AdminCollectionConfig): Cell {
-    return beginCell().endCell();
+    return beginCell()
+            .storeAddress(config.ownerAddress)
+            .storeUint(config.nextItemIndex, 64)
+            .storeRef(config.content)
+            .storeRef(config.nftItemCode)
+            .storeRef(config.royaltyParams)
+        .endCell();
 }
 
 export class AdminCollection implements Contract {

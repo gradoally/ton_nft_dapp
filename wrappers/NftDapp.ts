@@ -1,9 +1,26 @@
-import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, Sender, SendMode } from 'ton-core';
+import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, Dictionary, DictionaryKey, Sender, SendMode } from 'ton-core';
 
-export type NftDappConfig = {};
+export type NftDappConfig = {
+    seqno: number;
+    publicKey: number;
+    ownerAddress: Address;
+    nextCollectionIndex: number;
+    collectioinsDict: Dictionary<64, Address>;
+
+};
+
+
+// let dict = Dictionary.empty(Dictionary.Keys.Uint(64), Dictionary.Values.Address());
+
 
 export function nftDappConfigToCell(config: NftDappConfig): Cell {
-    return beginCell().endCell();
+    return beginCell()
+          .storeUint(config.seqno, 32)
+          .storeUint(config.publicKey, 256)   // storeUint ??
+          .storeAddress(config.ownerAddress)
+          .storeUint(config.nextCollectionIndex, 64)
+          .storeDict(config.collectioinsDict)
+        .endCell();
 }
 
 export class NftDapp implements Contract {

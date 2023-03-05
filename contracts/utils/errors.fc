@@ -1,4 +1,0 @@
-;; Error codes
-
-const error::not_internal_message = 444;
-const error::not_external_message = 555;

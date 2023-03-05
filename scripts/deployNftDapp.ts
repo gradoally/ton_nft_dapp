@@ -39,7 +39,8 @@ export async function run(provider: NetworkProvider) {
     const nftDapp = NftDapp.createFromConfig(
         {
             seqno: 0,
-            publicKey: (await main()).publicKey,
+            publicKey: Buffer.from('asdfghjkl;98765434567890'),
+           // publicKey: (await main()).publicKey,
             ownerAddress: new Address(0, Buffer.from('80d78a35f955a14b679faa887ff4cd5bfc0f43b4a4eea2a7e6927f3701b273c2')),
             nextCollectionIndex: 0,
             collectioinsDict: Dictionary.empty(Dictionary.Keys.Uint(64), Dictionary.Values.Address()),

@@ -14,7 +14,6 @@
 #include "utils/op-codes.fc";
 #include "utils/constants.fc";
 #include "utils/params.fc";
-#include "utils/errors.fc";
 
 const int user_mint_request = 1;
 const int batch_user_mint_request = 2;

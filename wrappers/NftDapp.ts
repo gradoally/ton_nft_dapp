@@ -1,11 +1,12 @@
 import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, Dictionary, DictionaryKey, Sender, SendMode } from 'ton-core';
+import { Buffer } from 'buffer';
 
 export type NftDappConfig = {
     seqno: number;
-    publicKey: number;
+    publicKey: Buffer;
     ownerAddress: Address;
     nextCollectionIndex: number;
-    collectioinsDict: Dictionary<64, Address>;
+    collectioinsDict: Dictionary<number, Address>;
 
 };
 
@@ -16,7 +17,7 @@ export type NftDappConfig = {
 export function nftDappConfigToCell(config: NftDappConfig): Cell {
     return beginCell()
           .storeUint(config.seqno, 32)
-          .storeUint(config.publicKey, 256)   // storeUint ??
+          .storeBuffer(config.publicKey)   
           .storeAddress(config.ownerAddress)
           .storeUint(config.nextCollectionIndex, 64)
           .storeDict(config.collectioinsDict)

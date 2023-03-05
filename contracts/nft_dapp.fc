@@ -73,18 +73,18 @@ slice calculate_collection_address(cell state_init) {
 
 () change_owner(slice new_owner_addr) impure {
 
-  (int seqno, int public_key, slice dapp_owner, int next_collection_index, int next_collection_index, cell collections_dict) = load_data();
+  (int seqno, int public_key, slice dapp_owner, int next_collection_index, cell collections_dict) = load_data();
 
   force_chain(new_owner_addr);
 
-  save_data(seqno, public_key, new_owner_addr, next_collection_index, next_collection_index, collections_dict);
+  save_data(seqno, public_key, new_owner_addr, next_collection_index, collections_dict);
 }
 
 () withdraw_funds(int my_balance, int withdraw_amount) impure {
 
   throw_unless(407, my_balance + MIN_TONS_FOR_STORAGE > withdraw_amount);
 
-  (_, _, slice dapp_owner,  _,  _, _) = load_data();
+  (_, _, slice dapp_owner,  _, _) = load_data();
 
   messages::send_empty(withdraw_amount, dapp_owner, NORMAL);
 }

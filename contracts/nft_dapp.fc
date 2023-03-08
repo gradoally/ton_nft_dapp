@@ -99,7 +99,7 @@ slice calculate_collection_address(cell state_init) {
   throw(0);
 }
 
-() main (int my_balance, int msg_value, slice in_msg_body, cell in_msg_full) impure {
+() main (int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
 
   slice cs = in_msg_full.begin_parse();
 
@@ -153,7 +153,7 @@ slice calculate_collection_address(cell state_init) {
   throw(0xffff);
 }
 
-(slice) return_collection_addr_by_id (cell collections_dict, int collection_id) inline {
+(slice) return_collection_addr_by_id (cell collections_dict, int collection_id) inline_ref {
 
   (slice value, int f) = udict_get?(collections_dict, 64, collection_id);
 
@@ -243,7 +243,6 @@ slice calculate_collection_address(cell state_init) {
     int msg_segno = cs~load_uint(32);
 
     (
-
       int seqno, 
       int public_key,
       slice dapp_owner,
@@ -330,10 +329,10 @@ var get_deployed_collections_addrs() method_id {
 
     (_, _, _, _, cell collections_dict) = load_data();
 
-    int cursor = 0x7fffffff;  ;; max uint32 
+    int index = 0x7fffffff;  ;; max uint32 
     var l = null();
     do {
-        (cursor, slice coll, var f) = collections_dict.udict_get_prev?(32, cursor);
+        (index, slice coll, var f) = collections_dict.udict_get_prev?(64, index);
         if (f) {
             slice coll_addr = coll~load_msg_addr();
 

@@ -4,7 +4,7 @@ export type OrderNftConfig = {
     index: number;
     collectionAddress: Address;
     ownerAddress: Address;
-    content: Dictionary<64, Cell>;
+    content: Dictionary<number, Cell>;
     authorityAddress: Address;
     editorAddress: Address;
     revokedAt: number;

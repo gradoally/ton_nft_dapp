@@ -1,4 +1,0 @@
-contract:
-  data: fift/data.fif
-  func:
-    - contracts/nft_dapp.fc

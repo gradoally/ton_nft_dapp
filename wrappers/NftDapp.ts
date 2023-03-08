@@ -6,13 +6,9 @@ export type NftDappConfig = {
     publicKey: Buffer;
     ownerAddress: Address;
     nextCollectionIndex: number;
-    collectioinsDict: Dictionary<number, Address>;
+    collectionsDict: Dictionary<number, Address>;
 
 };
-
-
-// let dict = Dictionary.empty(Dictionary.Keys.Uint(64), Dictionary.Values.Address());
-
 
 export function nftDappConfigToCell(config: NftDappConfig): Cell {
     return beginCell()
@@ -20,7 +16,7 @@ export function nftDappConfigToCell(config: NftDappConfig): Cell {
           .storeBuffer(config.publicKey)   
           .storeAddress(config.ownerAddress)
           .storeUint(config.nextCollectionIndex, 64)
-          .storeDict(config.collectioinsDict)
+          .storeDict(config.collectionsDict)
         .endCell();
 }
 
@@ -44,4 +40,5 @@ export class NftDapp implements Contract {
             body: beginCell().endCell(),
         });
     }
+
 }

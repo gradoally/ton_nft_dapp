@@ -18,12 +18,6 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
 ;;  uint64 index
 ;;  MsgAddressInt collection_address
 ;;  MsgAddressInt owner_address
-;;  cell content (hashmap)
-    ;; String category
-    ;; uint64 createdAt
-    ;; MsgAddressInt freelancerAddress
-    ;; Cell description
-    ;; uint256 image
 ;;  MsgAddressInt authority_address
 ;;  MsgAddressInt editor_address
 ;;  uint64 revoked_at
@@ -33,7 +27,7 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
     slice ds = get_data().begin_parse();
     var (index, collection_address) = (ds~load_uint(64), ds~load_msg_addr());
     if (ds.slice_bits() > 0) {
-      return (-1, index, collection_address, ds~load_msg_addr(), ds~load_dict(),  ds~load_msg_addr(), ds~load_msg_addr(), ds~load_uint(64));
+      return (-1, index, collection_address, ds~load_msg_addr(), ds~load_dict(), ds~load_msg_addr(), ds~load_msg_addr(), ds~load_uint(64));
     } else {  
       return (0, index, collection_address, null(), null(), null(), null(), null()); ;; nft not initialized yet
     }
@@ -332,4 +326,17 @@ int get_revoked_time() method_id {
 slice get_editor_address() method_id {
     (_, _, _, _, _, _, slice editor_address, _) = load_data();
     return editor_address;
+}
+
+cell build_content_cell() impure {
+    (_, int index, slice collection_address, slice owner_address, cell content, slice authority_address, slice editor_address, int revoked_at) = load_data();
+
+    content~udict_set_ref(256, "createdAt:"H, begin_cell().store_uint(now(), 32).end_cell());
+    content~udict_set_ref(256, "category:"H, begin_cell().store_slice("DeFi").end_cell());   ;; "DeFi" is just an example category
+    content~udict_set_ref(256, "description:"H, begin_cell().store_slice("It's a description of a post. You can paste whatever you want here.").end_cell());
+    content~udict_set_ref(256, "freelancerAddress:"H, begin_cell().store_slice("EQBNHgU3GiNnGewebGogIfblJhInOtKkbO6knXDXQ24BBOJX"a).end_cell());
+    content~udict_set_ref(256, "image:"H, begin_cell().store_slice("<link or somewhat else of an image>").end_cell());
+
+    store_data(index, collection_address, owner_address, content, authority_address, editor_address, revoked_at);
+    return content;
 }

@@ -27,3 +27,5 @@ export async function run(provider: NetworkProvider) {
     const openedContract = provider.open(adminCollection);
 
 }
+
+

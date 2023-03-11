@@ -1,15 +1,15 @@
 import { toNano, Address } from "ton-core";
-import { compile, NetworkProvider } from "@ton-community/blueprint";
-import { AdminCollection } from '../wrappers/AdminCollection';
+import { NetworkProvider } from "@ton-community/blueprint";
+import { Dapp } from "./implementations/NftCollection";
 
 export async function run(provider: NetworkProvider) {
 
-  const contract = Address.parse('EQADBXugwmn4YvWsQizHdWGgfCTN_s3qFP0Ae0pzkU-jwzoE');  
+  const contract = Dapp.fromAddress(Address.parse('EQADBXugwmn4YvWsQizHdWGgfCTN_s3qFP0Ae0pzkU-jwzoE'));  
   const openedContract = provider.open(contract);
 
   const sender = provider.sender();
 
-  const mintCollectionMessage = 'Mint collection!';
+  const mintCollectionMessage = 'DeployCollection!';
 
   await openedContract.send(
     sender,

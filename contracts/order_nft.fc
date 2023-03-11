@@ -18,6 +18,7 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
 ;;  uint64 index
 ;;  MsgAddressInt collection_address
 ;;  MsgAddressInt owner_address
+;;  cell Content
 ;;  MsgAddressInt authority_address
 ;;  MsgAddressInt editor_address
 ;;  uint64 revoked_at
@@ -331,11 +332,11 @@ slice get_editor_address() method_id {
 cell build_content_cell() impure {
     (_, int index, slice collection_address, slice owner_address, cell content, slice authority_address, slice editor_address, int revoked_at) = load_data();
 
-    content~udict_set_ref(256, "createdAt:"H, begin_cell().store_uint(now(), 32).end_cell());
-    content~udict_set_ref(256, "category:"H, begin_cell().store_slice("DeFi").end_cell());   ;; "DeFi" is just an example category
-    content~udict_set_ref(256, "description:"H, begin_cell().store_slice("It's a description of a post. You can paste whatever you want here.").end_cell());
-    content~udict_set_ref(256, "freelancerAddress:"H, begin_cell().store_slice("EQBNHgU3GiNnGewebGogIfblJhInOtKkbO6knXDXQ24BBOJX"a).end_cell());
-    content~udict_set_ref(256, "image:"H, begin_cell().store_slice("<link or somewhat else of an image>").end_cell());
+    content~udict_set_ref(256, "CreatedAt"H, begin_cell().store_uint(now(), 32).end_cell());
+    content~udict_set_ref(256, "Category"H, begin_cell().store_slice("DeFi").end_cell());   ;; "DeFi" is just an example category
+    content~udict_set_ref(256, "Description"H, begin_cell().store_slice("It's a description of a post. You can paste whatever you want here.").end_cell());
+    content~udict_set_ref(256, "FreelancerAddress"H, begin_cell().store_slice("EQBNHgU3GiNnGewebGogIfblJhInOtKkbO6knXDXQ24BBOJX"a).end_cell());
+    content~udict_set_ref(256, "Image"H, begin_cell().store_slice("<link or somewhat else of an image>").end_cell());
 
     store_data(index, collection_address, owner_address, content, authority_address, editor_address, revoked_at);
     return content;

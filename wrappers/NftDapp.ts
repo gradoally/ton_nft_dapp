@@ -1,5 +1,6 @@
-import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, Dictionary, DictionaryKey, Sender, SendMode } from 'ton-core';
+import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, Dictionary, Sender, SendMode } from 'ton-core';
 import { Buffer } from 'buffer';
+import { crc32 } from '../scripts/helpers/crc32';
 
 export type NftDappConfig = {
     seqno: number;
@@ -20,6 +21,10 @@ export function nftDappConfigToCell(config: NftDappConfig): Cell {
         .endCell();
 }
 
+export const Opcodes = {
+    changeOwner: crc32("op::change_owner"),
+};
+
 export class NftDapp implements Contract {
     constructor(readonly address: Address, readonly init?: { code: Cell; data: Cell }) {}
 
@@ -39,6 +44,31 @@ export class NftDapp implements Contract {
             sendMode: SendMode.PAY_GAS_SEPARATLY,
             body: beginCell().endCell(),
         });
+    }
+
+    async sendChangeOwner(
+        provider: ContractProvider,
+        via: Sender,
+        opts: {
+            newOwnerAddr: Address;
+            value: string;
+            queryID?: number;
+        }
+    ) {
+        await provider.internal(via, {
+            value: opts.value,
+            sendMode: SendMode.PAY_GAS_SEPARATLY,
+            body: beginCell()
+                .storeUint(Opcodes.changeOwner, 32)
+                .storeUint(opts.queryID ?? 0, 64)
+                .storeAddress(opts.newOwnerAddr)
+                .endCell(),
+        });
+    }
+
+    async getSeqno(provider: ContractProvider) {
+        const result = await provider.get('get_seqno', []);
+        return result.stack.readNumber();
     }
 
 }

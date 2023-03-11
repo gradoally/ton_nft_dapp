@@ -15,7 +15,7 @@ export async function run(provider: NetworkProvider) {
         {
             seqno: 0,
             publicKey: (await createKeys()).publicKey,
-            ownerAddress: new Address(0, Buffer.from('80d78a35f955a14b679faa887ff4cd5bfc0f43b4a4eea2a7e6927f3701b273c2')),
+            ownerAddress: Address.parse('EQBNHgU3GiNnGewebGogIfblJhInOtKkbO6knXDXQ24BBOJX'),
             nextCollectionIndex: 0,
             collectionsDict: Dictionary.empty(Dictionary.Keys.Uint(64), Dictionary.Values.Address()),
         }, 

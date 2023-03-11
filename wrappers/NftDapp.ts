@@ -51,8 +51,7 @@ export class NftDapp implements Contract {
         via: Sender,
         opts: {
             newOwnerAddr: Address;
-            value: string;
-            queryID?: number;
+            value: bigint;
         }
     ) {
         await provider.internal(via, {
@@ -60,7 +59,6 @@ export class NftDapp implements Contract {
             sendMode: SendMode.PAY_GAS_SEPARATLY,
             body: beginCell()
                 .storeUint(Opcodes.changeOwner, 32)
-                .storeUint(opts.queryID ?? 0, 64)
                 .storeAddress(opts.newOwnerAddr)
                 .endCell(),
         });
@@ -69,6 +67,11 @@ export class NftDapp implements Contract {
     async getSeqno(provider: ContractProvider) {
         const result = await provider.get('get_seqno', []);
         return result.stack.readNumber();
+    }
+
+    async getDappOwner(provider: ContractProvider) {
+        const result = await provider.get('get_owner_addr', []);
+        return result.stack.readAddress();
     }
 
 }

@@ -325,6 +325,11 @@ int get_seqno() method_id {
   return seqno;
 }
 
+(slice) get_owner_addr() method_id {
+  (_, _, slice dapp_owner, _, _) = load_data();
+  return dapp_owner;
+}
+
 var get_deployed_collections_addrs() method_id {
 
     (_, _, _, _, cell collections_dict) = load_data();

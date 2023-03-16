@@ -2,10 +2,10 @@ import { Address, Dictionary, toNano } from 'ton-core';
 import { NftDapp } from '../wrappers/NftDapp';
 import { compile, NetworkProvider } from '@ton-community/blueprint';
 import { mnemonicNew, mnemonicToPrivateKey } from 'ton-crypto';
-import { Buffer } from 'buffer';
 
 export async function createKeys() {
-    let words = await mnemonicNew(24);
+    let words = Array('country corn author swear flame volume sea item add age grain leaf post skin unveil garment vault thing cute few chat claw during thrive');
+    // await mnemonicNew(24);
     const keys = mnemonicToPrivateKey(words);
     return keys;
 }

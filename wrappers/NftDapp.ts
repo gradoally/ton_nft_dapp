@@ -2,6 +2,8 @@ import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, 
 import { Buffer } from 'buffer';
 import { crc32 } from '../scripts/helpers/crc32';
 
+let message;
+
 export type NftDappConfig = {
     seqno: number;
     publicKey: Buffer;
@@ -23,6 +25,7 @@ export function nftDappConfigToCell(config: NftDappConfig): Cell {
 
 export const Opcodes = {
     changeOwner: crc32("op::change_owner"),
+    deployCollection: crc32("op::deploy_collection")
 };
 
 export class NftDapp implements Contract {
@@ -62,6 +65,32 @@ export class NftDapp implements Contract {
                 .storeAddress(opts.newOwnerAddr)
                 .endCell(),
         });
+    }
+
+    async someFunction(
+        provider: ContractProvider,
+        opts: {
+            queryID?: number;
+            signature: Buffer;
+            seqno: number;
+            collectionId: number;
+            collectionCode: Cell;
+            collectionData: Cell;
+            value: bigint;
+        }
+    ) {
+
+    await provider.external(
+        beginCell()
+            .storeBuffer(opts.signature)
+            .storeUint(opts.seqno, 32)
+            .storeUint(Opcodes.deployCollection, 32)
+            .storeUint(opts.queryID ?? 0, 64)
+            .storeUint(opts.collectionId, 64)
+            .storeRef(opts.collectionCode)
+            .storeRef(opts.collectionData)
+        .endCell()
+        );
     }
 
     async getSeqno(provider: ContractProvider) {

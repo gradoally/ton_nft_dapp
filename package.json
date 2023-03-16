@@ -21,6 +21,7 @@
         "typescript": "^4.9.4"
     },
     "dependencies": {
-        "ton-emulator": "^2.1.1"
+        "ton-emulator": "^2.1.1",
+        "tonweb": "^0.0.60"
     }
 }

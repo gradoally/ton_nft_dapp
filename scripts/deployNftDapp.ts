@@ -1,14 +1,7 @@
 import { Address, Dictionary, toNano } from 'ton-core';
 import { NftDapp } from '../wrappers/NftDapp';
 import { compile, NetworkProvider } from '@ton-community/blueprint';
-import { mnemonicNew, mnemonicToPrivateKey } from 'ton-crypto';
-
-export async function createKeys() {
-    let words = Array('country corn author swear flame volume sea item add age grain leaf post skin unveil garment vault thing cute few chat claw during thrive');
-    // await mnemonicNew(24);
-    const keys = mnemonicToPrivateKey(words);
-    return keys;
-}
+import { createKeys } from './helpers/keys';
 
 export async function run(provider: NetworkProvider) {
     const nftDapp = NftDapp.createFromConfig(
@@ -23,8 +16,6 @@ export async function run(provider: NetworkProvider) {
     );
 
     await provider.deploy(nftDapp, toNano('0.05'));
-
-    const openedContract = provider.open(nftDapp);
 
 }
 

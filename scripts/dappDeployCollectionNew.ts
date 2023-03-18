@@ -1,10 +1,10 @@
 import { NftDapp, Opcodes } from '../wrappers/NftDapp';
 import { NetworkProvider } from '@ton-community/blueprint';
 import { Address, beginCell, Cell, toNano } from 'ton-core';
-import { sign, KeyPair } from 'ton-crypto';
-import { createKeys } from './deployNftDapp';
+import { sign } from 'ton-crypto';
 import { CollectionCodeCell } from './helpers/collectionCode';
 import { NftItemCodeCell } from './helpers/nftItemCode';
+import { createKeys } from './helpers/keys';
 import { randomAddress } from './helpers/randomAddr';
 
 export async function run(provider: NetworkProvider, args: string[]) {
@@ -24,8 +24,8 @@ export async function run(provider: NetworkProvider, args: string[]) {
           .storeRef(CollectionCodeCell)  // collection code
           .storeRef(
              beginCell()
-               .storeAddress(Address.parse("EQBNHgU3GiNnGewebGogIfblJhInOtKkbO6knXDXQ24BBOJX")) // owner addr
-               .storeUint(1, 64) // next item index
+               .storeAddress(Address.parse("EQBEMxgQUG00VwOAvmPYfZbOQwllVU5zEIahLLKmtej43K3Y")) // owner addr 
+               .storeUint(0, 64) // next item index
                .storeRef(new Cell()) // content
                .storeRef(NftItemCodeCell) // nft item code
                .storeRef(
@@ -48,10 +48,10 @@ export async function run(provider: NetworkProvider, args: string[]) {
         collectionData: beginCell()
                     .storeRef(
                       beginCell()
-                      .storeAddress(Address.parse("EQBNHgU3GiNnGewebGogIfblJhInOtKkbO6knXDXQ24BBOJX")) // owner addr
-                      .storeUint(1, 64) // next item index
-                      .storeRef(new Cell()) // content
-                      .storeRef(NftItemCodeCell) // nft item code
+                      .storeAddress(Address.parse("EQBEMxgQUG00VwOAvmPYfZbOQwllVU5zEIahLLKmtej43K3Y")) 
+                      .storeUint(0, 64) 
+                      .storeRef(new Cell()) 
+                      .storeRef(NftItemCodeCell) 
                       .storeRef(
                          beginCell()
                           .storeUint(12, 16)

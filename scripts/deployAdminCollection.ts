@@ -9,7 +9,7 @@ export async function run(provider: NetworkProvider) {
 
     const adminCollection = AdminCollection.createFromConfig(
         {
-            ownerAddress: randomAddress(),
+            ownerAddress: Address.parse("EQBEMxgQUG00VwOAvmPYfZbOQwllVU5zEIahLLKmtej43K3Y"), // owner address is equal to dapp address
             nextItemIndex: 0,
             content: beginCell().storeUint(randomSeed, 256).endCell(),
             nftItemCode: NftItemCodeCell,
@@ -24,7 +24,6 @@ export async function run(provider: NetworkProvider) {
 
     await provider.deploy(adminCollection, toNano('0.05'));
 
-    const openedContract = provider.open(adminCollection);
 
 }
 

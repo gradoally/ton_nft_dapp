@@ -260,7 +260,6 @@ slice calculate_collection_address(cell state_init) {
 
     int op = in_msg_body~load_uint(32);
     int query_id = in_msg_body~load_uint(64);
-   ;; slice collection_id = in_msg_body~load_msg_addr();  ;; collection_id is collection address  Probably should be removed
 
     int collection_id = in_msg_body~load_uint(64);
 

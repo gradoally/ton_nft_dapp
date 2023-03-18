@@ -2,8 +2,6 @@ import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, 
 import { Buffer } from 'buffer';
 import { crc32 } from '../scripts/helpers/crc32';
 
-let message;
-
 export type NftDappConfig = {
     seqno: number;
     publicKey: Buffer;

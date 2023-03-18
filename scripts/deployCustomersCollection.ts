@@ -1,4 +1,4 @@
-import { beginCell, toNano } from 'ton-core';
+import { Address, beginCell, toNano } from 'ton-core';
 import { CustomersCollection } from '../wrappers/CustomersCollection';
 import { compile, NetworkProvider } from '@ton-community/blueprint';
 import { randomAddress } from './helpers/randomAddr';
@@ -8,7 +8,7 @@ import { randomSeed } from './helpers/randomSeed';
 export async function run(provider: NetworkProvider) {
     const customersCollection = CustomersCollection.createFromConfig(
         {
-            ownerAddress: randomAddress(),
+            ownerAddress: Address.parse("EQBEMxgQUG00VwOAvmPYfZbOQwllVU5zEIahLLKmtej43K3Y"), // owner address is equal to dapp address
             nextItemIndex: 0,
             content: beginCell().storeUint(randomSeed, 256).endCell(),
             nftItemCode: NftItemCodeCell,
@@ -23,7 +23,4 @@ export async function run(provider: NetworkProvider) {
 
     await provider.deploy(customersCollection, toNano('0.05'));
 
-    const openedContract = provider.open(customersCollection);
-
-    // run methods on `openedContract`
 }

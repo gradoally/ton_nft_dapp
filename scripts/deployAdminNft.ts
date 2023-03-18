@@ -1,4 +1,4 @@
-import { beginCell, toNano } from 'ton-core';
+import { Address, beginCell, toNano } from 'ton-core';
 import { AdminNft } from '../wrappers/AdminNft';
 import { compile, NetworkProvider } from '@ton-community/blueprint';
 import { randomAddress } from './helpers/randomAddr';
@@ -12,7 +12,7 @@ export async function run(provider: NetworkProvider) {
             ownerAddress: randomAddress(),
             content: beginCell().storeUint(randomSeed, 256).endCell(),
             authorityAddress: randomAddress(),
-            editorAddress: randomAddress(),
+            editorAddress: Address.parse("EQBEMxgQUG00VwOAvmPYfZbOQwllVU5zEIahLLKmtej43K3Y"),
             revokedAt: Math.floor(Date.now() / 1000)
 
         }, 
@@ -21,7 +21,4 @@ export async function run(provider: NetworkProvider) {
 
     await provider.deploy(adminNft, toNano('0.05'));
 
-    const openedContract = provider.open(adminNft);
-
-    // run methods on `openedContract`
 }

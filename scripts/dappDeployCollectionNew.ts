@@ -6,6 +6,7 @@ import { CollectionCodeCell } from './helpers/collectionCode';
 import { NftItemCodeCell } from './helpers/nftItemCode';
 import { createKeys } from './helpers/keys';
 import { randomAddress } from './helpers/randomAddr';
+import { randomSeed } from './helpers/randomSeed';
 
 export async function run(provider: NetworkProvider, args: string[]) {
     const ui = provider.ui();
@@ -14,10 +15,10 @@ export async function run(provider: NetworkProvider, args: string[]) {
 
     const nftDapp = provider.open(NftDapp.createFromAddress(address));
 
-    // const seqno = await nftDapp.getSeqno();
+    const seqno = await nftDapp.getSeqno();
 
     const msg = beginCell()
-          .storeUint(0, 32) // seqno
+          .storeUint(seqno, 32) // seqno
           .storeUint(Opcodes.deployCollection, 32)
           .storeUint(0, 64) // queryId
           .storeUint(0, 64) // collectionId
@@ -26,7 +27,7 @@ export async function run(provider: NetworkProvider, args: string[]) {
              beginCell()
                .storeAddress(Address.parse("EQBEMxgQUG00VwOAvmPYfZbOQwllVU5zEIahLLKmtej43K3Y")) // owner addr 
                .storeUint(0, 64) // next item index
-               .storeRef(new Cell()) // content
+               .storeRef(beginCell().storeUint(randomSeed, 256).endCell()) // content
                .storeRef(NftItemCodeCell) // nft item code
                .storeRef(
                   beginCell()
@@ -42,7 +43,7 @@ export async function run(provider: NetworkProvider, args: string[]) {
     await nftDapp.someFunction(provider.provider(address), {
 
         signature: sign(hash, (await createKeys()).secretKey),
-        seqno: 0,
+        seqno: seqno,
         collectionId: 0,
         collectionCode: CollectionCodeCell,
         collectionData: beginCell()
@@ -50,7 +51,7 @@ export async function run(provider: NetworkProvider, args: string[]) {
                       beginCell()
                       .storeAddress(Address.parse("EQBEMxgQUG00VwOAvmPYfZbOQwllVU5zEIahLLKmtej43K3Y")) 
                       .storeUint(0, 64) 
-                      .storeRef(new Cell()) 
+                      .storeRef(beginCell().storeUint(randomSeed, 256).endCell()) 
                       .storeRef(NftItemCodeCell) 
                       .storeRef(
                          beginCell()

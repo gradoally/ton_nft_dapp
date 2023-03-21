@@ -15,8 +15,8 @@
 #include "utils/constants.fc";
 #include "utils/params.fc";
 
-const int user_mint_request = 1;
-const int batch_user_mint_request = 2;
+;;const int user_mint_request = 1;
+;;const int batch_user_mint_request = 2;
 
 (
   
@@ -324,19 +324,19 @@ int get_seqno() method_id {
   return seqno;
 }
 
-(slice) get_owner_addr() method_id {
-  (_, _, slice dapp_owner, _, _) = load_data();
-  return dapp_owner;
-}
+;; (slice) get_owner_addr() method_id {
+;;   (_, _, slice dapp_owner, _, _) = load_data();
+;;   return dapp_owner;
+;; }
 
 var get_deployed_collections_addrs() method_id {
 
     (_, _, _, _, cell collections_dict) = load_data();
 
-    int index = 0x7fffffff;  ;; max uint32 
+    int idx = 0x7fffffff;  ;; max uint32 
     var l = null();
     do {
-        (index, slice coll, var f) = collections_dict.udict_get_prev?(64, index);
+        (idx, slice coll, var f) = collections_dict.udict_get_prev?(64, idx);
         if (f) {
             slice coll_addr = coll~load_msg_addr();
 

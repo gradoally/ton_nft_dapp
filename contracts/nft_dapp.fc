@@ -254,56 +254,55 @@ slice calculate_collection_address(cell state_init) {
     throw_unless(33, msg_segno == seqno);
     throw_unless(35, check_signature(slice_hash(in_msg_body), signature, public_key));
 
-    cs.end_parse();
+    int op = cs~load_uint(32);
+    int query_id = cs~load_uint(64);
+
+    int collection_id = cs~load_uint(64);
+
     accept_message();
     cs~touch();
-
-    int op = in_msg_body~load_uint(32);
-    int query_id = in_msg_body~load_uint(64);
-
-    int collection_id = in_msg_body~load_uint(64);
 
     ;; Deploy Collection
 
     if (op == op::deploy_collection) {
 
-      collections_dict = deploy_collection(collections_dict, MIN_DEPLOY_AMOUNT, in_msg_body~load_ref(), in_msg_body~load_ref(), next_collection_index);  
+      collections_dict = deploy_collection(collections_dict, MIN_DEPLOY_AMOUNT, cs~load_ref(), cs~load_ref(), next_collection_index);  
 
     }
 
     if (op == op::mint_notification) {  ;; nft has just been initialized
 
-      mint_notification(collections_dict, collection_id, in_msg_body~load_uint(64), query_id, in_msg_body~load_uint(8));
+      mint_notification(collections_dict, collection_id, cs~load_uint(64), query_id, cs~load_uint(8));
 
     }
 
     if (op == op::deploy_nft_item) {
 
-      deploy_nft_item(collections_dict, collection_id, query_id, in_msg_body~load_uint(64), MIN_DEPLOY_AMOUNT, in_msg_body~load_ref());
+      deploy_nft_item(collections_dict, collection_id, query_id, cs~load_uint(64), MIN_DEPLOY_AMOUNT, cs~load_ref());
 
     }
 
     if (op == op::batch_nft_deploy) {
 
-      batch_nft_deploy(collections_dict, collection_id, query_id, in_msg_body~load_ref());
+      batch_nft_deploy(collections_dict, collection_id, query_id, cs~load_ref());
 
     }
 
     if (op == op::change_collection_owner) {
 
-      change_collection_owner(collections_dict, collection_id, query_id, in_msg_body~load_msg_addr());
+      change_collection_owner(collections_dict, collection_id, query_id, cs~load_msg_addr());
 
     }
 
     if (op == op::edit_nft_content) {
 
-      edit_nft_content(collections_dict, collection_id, query_id, in_msg_body~load_ref(), in_msg_body~load_ref());
+      edit_nft_content(collections_dict, collection_id, query_id, cs~load_ref(), cs~load_ref());
 
     }
 
     if (op == op::upgrade_collection_code) {
 
-      upgrade_collection_code(collections_dict, collection_id, query_id, in_msg_body~load_ref());
+      upgrade_collection_code(collections_dict, collection_id, query_id, cs~load_ref());
 
     }
 
@@ -324,10 +323,15 @@ int get_seqno() method_id {
   return seqno;
 }
 
-;; (slice) get_owner_addr() method_id {
-;;   (_, _, slice dapp_owner, _, _) = load_data();
-;;   return dapp_owner;
-;; }
+(int, slice, int, cell) get_dapp_data() method_id {
+  (_, int public_key, slice dapp_owner, int next_collection_index, cell collections_dict) = load_data();
+  return (
+    public_key,
+    dapp_owner,
+    next_collection_index,
+    collections_dict
+  );
+}
 
 var get_deployed_collections_addrs() method_id {
 
@@ -347,3 +351,4 @@ var get_deployed_collections_addrs() method_id {
 
     return l; ;; return list of deployed_collections_addrs
 }
+

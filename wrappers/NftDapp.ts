@@ -1,9 +1,23 @@
-import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, Dictionary, Sender, SendMode } from 'ton-core';
+import { 
+    Address, 
+    beginCell, 
+    Cell, 
+    Contract, 
+    contractAddress, 
+    ContractProvider, 
+    Dictionary, 
+    Sender, 
+    SendMode, 
+    external, 
+    Builder, 
+    internal, 
+    storeMessageRelaxed,
+} from 'ton-core';
+
 import { Buffer } from 'buffer';
 import { crc32 } from '../scripts/helpers/crc32';
 
 export type NftDappConfig = {
-    seqno: number;
     publicKey: Buffer;
     ownerAddress: Address;
     nextCollectionIndex: number;
@@ -13,7 +27,7 @@ export type NftDappConfig = {
 
 export function nftDappConfigToCell(config: NftDappConfig): Cell {
     return beginCell()
-          .storeUint(config.seqno, 32)
+          .storeUint(0, 32)
           .storeBuffer(config.publicKey)   
           .storeAddress(config.ownerAddress)
           .storeUint(config.nextCollectionIndex, 64)
@@ -23,7 +37,9 @@ export function nftDappConfigToCell(config: NftDappConfig): Cell {
 
 export const Opcodes = {
     changeOwner: crc32("op::change_owner"),
-    deployCollection: crc32("op::deploy_collection")
+    deployCollection: crc32("op::deploy_collection"),
+    changeCollectionOwner: crc32("op::change_collection_owner"),
+    upgradeCollectionCode: crc32("op::upgrade_collection_code")
 };
 
 export class NftDapp implements Contract {
@@ -65,40 +81,102 @@ export class NftDapp implements Contract {
         });
     }
 
-    async someFunction(
+    async sendDeployCollectionMsg(
         provider: ContractProvider,
-        opts: {
-            queryID?: number;
-            signature: Buffer;
-            seqno: number;
-            collectionId: number;
+        params: {
             collectionCode: Cell;
             collectionData: Cell;
-            value: bigint;
+            address: Address;
+            amount: bigint;
+            opCode: number;
+            collectionId: number;
+            queryId: number;
+            signFunc: (buf: Buffer) => Buffer;
+            seqno: number;
         }
     ) {
+        const msg = internal({
+            to: params.address,
+            value: params.amount,
+           // body: params.code,
+    
+        });
 
-    await provider.external(
-        beginCell()
-            .storeBuffer(opts.signature)
-            .storeUint(opts.seqno, 32)
-            .storeUint(Opcodes.deployCollection, 32)
-            .storeUint(opts.queryID ?? 0, 64)
-            .storeUint(opts.collectionId, 64)
-            .storeRef(opts.collectionCode)
-            .storeRef(opts.collectionData)
-        .endCell()
+        const cellToSign = beginCell()
+            .storeUint(params.seqno, 32)
+            .storeUint(params.opCode, 32)
+            .storeUint(params.queryId, 64)
+            .storeUint(params.collectionId, 64)
+            .storeRef(params.collectionCode)
+            .storeRef(params.collectionData)
+           // .storeRef(beginCell().store(storeMessageRelaxed(msg)).endCell())
+            .endCell();
+
+        const sig = params.signFunc(cellToSign.hash());
+
+        await provider.external(
+            beginCell()
+              .storeBuffer(sig)
+              .storeSlice(cellToSign.asSlice())
+              .endCell()
         );
     }
+
+
+    async sendUpdateCollectionMsg(
+        provider: ContractProvider,
+        params: {
+            code: Cell;
+            address: Address;
+            amount: bigint;
+            opCode: number;
+            collectionId: number;
+            queryId: number;
+            signFunc: (buf: Buffer) => Buffer;
+            seqno: number;
+        }
+    ) {
+        const msg = internal({
+            to: params.address,
+            value: params.amount,
+            body: params.code,
+    
+        });
+
+        const cellToSign = beginCell()
+            .storeUint(params.seqno, 32)
+            .storeUint(params.opCode, 32)
+            .storeUint(params.queryId, 64)
+            .storeUint(params.collectionId, 64)
+            .storeRef(beginCell().store(storeMessageRelaxed(msg)).endCell())
+            .endCell();
+
+        const sig = params.signFunc(cellToSign.hash());
+
+        await provider.external(
+            beginCell()
+              .storeBuffer(sig)
+              .storeSlice(cellToSign.asSlice())
+              .endCell()
+        );
+    }
+
 
     async getSeqno(provider: ContractProvider) {
         const result = await provider.get('get_seqno', []);
         return result.stack.readNumber();
     }
 
-    async getDappOwner(provider: ContractProvider) {
-        const result = await provider.get('get_owner_addr', []);
-        return result.stack.readAddress();
+    async getDappData(provider: ContractProvider) {
+        const result = await provider.get('get_dapp_data', []);
+        return result.stack.readBuffer(), 
+            result.stack.readAddress(), 
+            result.stack.readBigNumber(), 
+            result.stack.readCell();
     }
-
+    
+    async getNextCollectionIndex(provider: ContractProvider) {
+        const result = await provider.get('get_dapp_data', []);
+        return result.stack.readBigNumber();
+    }
 }

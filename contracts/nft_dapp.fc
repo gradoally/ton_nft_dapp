@@ -70,6 +70,7 @@ slice calculate_collection_address(cell state_init) {
                      .begin_parse();
 }
 
+
 () change_owner(slice new_owner_addr) impure {
 
   (int seqno, int public_key, slice dapp_owner, int next_collection_index, cell collections_dict) = load_data();

@@ -6,7 +6,9 @@ import { compile } from '@ton-community/blueprint';
 import { createKeys } from '../scripts/helpers/keys';
 import { KeyPair, mnemonicNew, mnemonicToPrivateKey, sign } from 'ton-crypto';
 import { randomAddress } from '../scripts/helpers/randomAddr';
-import { CollectionCodeCell } from '../scripts/helpers/collectionCode';
+import { CollectionCodeCell } from '../scripts/helpers/collectionsCode';
+import { randomSeed } from '../scripts/helpers/randomSeed';
+import { NftItemCodeCell } from '../scripts/helpers/nftItemCode';
 
 describe('NftDapp', () => {
     let code: Cell;
@@ -57,8 +59,20 @@ describe('NftDapp', () => {
     });
 
     it('should sign msgDeployCollection', async () => {
-        const collectionCodeCell = beginCell().storeRef(CollectionCodeCell).endCell();
-        const collectionDataCell = beginCell().endCell();
+        const collectionCodeCell = CollectionCodeCell;
+        const collectionDataCell = beginCell()
+                            .storeAddress(randomAddress())
+                            .storeUint(1, 64)
+                            .storeRef(beginCell().storeUint(randomSeed, 256).endCell())
+                            .storeRef(NftItemCodeCell)
+                            .storeRef(
+                              beginCell()
+                                .storeUint(12, 16)
+                                .storeUint(100, 16)
+                                .storeAddress(randomAddress())
+                              .endCell()
+                            )
+                          .endCell();
 
         const toAddress = randomAddress();
 
@@ -74,6 +88,38 @@ describe('NftDapp', () => {
             seqno: 0,
         });
     });
+
+    it('should accept mint nft request', async () => {
+        const toAddress = randomAddress();
+
+        await nftDapp.sendDeployNftItemMsg({
+            itemIndex: 0,
+            itemContent: beginCell().storeUint(randomSeed, 256).endCell(),
+            signFunc: (buf) => sign(buf, keypair.secretKey),
+            amount: toNano('0.02'),
+            address: toAddress,
+            opCode: Opcodes.deployNftItem,
+            queryId: Date.now(),
+            collectionId: 0,
+            seqno: 0,
+        });
+    });
+    
+    it('should accept change collection owner request', async () => {
+        const toAddress = randomAddress();
+
+        await nftDapp.sendChangeCollectionOwnerMsg({
+            newOwner: randomAddress(),
+            signFunc: (buf) => sign(buf, keypair.secretKey),
+            amount: toNano('0.02'),
+            address: toAddress,
+            opCode: Opcodes.changeCollectionOwner,
+            queryId: Date.now(),
+            collectionId: 0,
+            seqno: 0,
+        });
+    });
+
 });
 
 export async function randomKeyPair() {

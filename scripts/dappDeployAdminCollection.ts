@@ -7,6 +7,7 @@ import { NftItemCodeCell } from './helpers/nftItemCode';
 import { createKeys } from './helpers/keys';
 import { randomAddress } from './helpers/randomAddr';
 import { randomSeed } from './helpers/randomSeed';
+import { sleep } from '@ton-community/blueprint/dist/utils';
 
 export async function run(provider: NetworkProvider, args: string[]) {
     const ui = provider.ui();
@@ -19,12 +20,13 @@ export async function run(provider: NetworkProvider, args: string[]) {
 
     const seqno = await nftDapp.getSeqno();
 
+    sleep(4000);
    // const collectionsDictSize = await nftDapp.getNextCollectionIndex(); // current amount of deployed collections
  
-    const collectionCodeCell = CollectionCodeCell;
+    const collectionCodeCell = AdminCollectionCodeCell;
     const collectionDataCell = beginCell()
                             .storeAddress(randomAddress())
-                            .storeUint(3, 64)
+                            .storeUint(1, 64)
                             .storeRef(beginCell().storeUint(randomSeed, 256).endCell())
                             .storeRef(NftItemCodeCell)
                             .storeRef(
@@ -44,10 +46,10 @@ export async function run(provider: NetworkProvider, args: string[]) {
         address: randomAddress(),
         opCode: Opcodes.deployCollection,
         queryId: Date.now(),
-        collectionId: 3,
+        collectionId: 1,
         seqno: seqno,
     });
 
-    ui.write("Collection deployed!");
+    ui.write("Admin Collection deployed!");
 }
 

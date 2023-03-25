@@ -39,7 +39,8 @@ export const Opcodes = {
     changeOwner: crc32("op::change_owner"),
     deployCollection: crc32("op::deploy_collection"),
     changeCollectionOwner: crc32("op::change_collection_owner"),
-    upgradeCollectionCode: crc32("op::upgrade_collection_code")
+    upgradeCollectionCode: crc32("op::upgrade_collection_code"),
+    deployNftItem: crc32("op::deploy_nft_item")
 };
 
 export class NftDapp implements Contract {
@@ -122,6 +123,84 @@ export class NftDapp implements Contract {
         );
     }
 
+    async sendDeployNftItemMsg(
+        provider: ContractProvider,
+        params: {
+            itemIndex: number;
+            itemContent: Cell;
+            address: Address;
+            amount: bigint;
+            opCode: number;
+            collectionId: number;
+            queryId: number;
+            signFunc: (buf: Buffer) => Buffer;
+            seqno: number;
+        }
+    ) {
+        const msg = internal({
+            to: params.address,
+            value: params.amount,
+           // body: params.code,
+    
+        });
+
+        const cellToSign = beginCell()
+            .storeUint(params.seqno, 32)
+            .storeUint(params.opCode, 32)
+            .storeUint(params.queryId, 64)
+            .storeUint(params.collectionId, 64)
+            .storeUint(params.itemIndex, 64)
+            .storeRef(params.itemContent)
+            .endCell();
+
+        const sig = params.signFunc(cellToSign.hash());
+
+        await provider.external(
+            beginCell()
+              .storeBuffer(sig)
+              .storeSlice(cellToSign.asSlice())
+              .endCell()
+        );
+
+    }
+
+    async sendChangeCollectionOwnerMsg(
+        provider: ContractProvider,
+        params: {
+            newOwner: Address,
+            address: Address;
+            amount: bigint;
+            opCode: number;
+            collectionId: number;
+            queryId: number;
+            signFunc: (buf: Buffer) => Buffer;
+            seqno: number;
+        }
+    ) {
+        const msg = internal({
+            to: params.address,
+            value: params.amount,
+         //   body: params.newOwner,
+    
+        });
+
+        const cellToSign = beginCell()
+            .storeUint(params.seqno, 32)
+            .storeUint(params.opCode, 32)
+            .storeUint(params.queryId, 64)
+            .storeUint(params.collectionId, 64)
+            .storeAddress(params.newOwner)
+            .endCell();
+
+        const sig = params.signFunc(cellToSign.hash());
+
+        await provider.external(
+            beginCell()
+              .storeBuffer(sig)
+              .storeSlice(cellToSign.asSlice())
+              .endCell()
+        );
+    }
 
     async sendUpdateCollectionMsg(
         provider: ContractProvider,

@@ -1,4 +1,5 @@
-import { NftDapp, Opcodes } from '../wrappers/NftDapp';
+import { NftDapp } from '../wrappers/NftDapp';
+import { Opcodes } from '../wrappers/utils/opCodes';
 import { NetworkProvider } from '@ton-community/blueprint';
 import { Address, beginCell, Cell, toNano } from 'ton-core';
 import { sign } from 'ton-crypto';

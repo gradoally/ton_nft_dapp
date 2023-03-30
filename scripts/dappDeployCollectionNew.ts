@@ -1,5 +1,6 @@
-import { NftDapp, Opcodes } from '../wrappers/NftDapp';
+import { NftDapp } from '../wrappers/NftDapp';
 import { NetworkProvider } from '@ton-community/blueprint';
+import { Opcodes } from '../wrappers/utils/opCodes';
 import { Address, beginCell, Cell, toNano } from 'ton-core';
 import { sign } from 'ton-crypto';
 import { AdminCollectionCodeCell, CollectionCodeCell } from './helpers/collectionsCode';
@@ -23,7 +24,7 @@ export async function run(provider: NetworkProvider, args: string[]) {
  
     const collectionCodeCell = CollectionCodeCell;
     const collectionDataCell = beginCell()
-                            .storeAddress(randomAddress())
+                            .storeAddress(Address.parse("EQCT9a-yXA9MUNTJb1RizIu72BTt3uYz9QY8LDpfZ6g4_eK8"))
                             .storeUint(3, 64)
                             .storeRef(beginCell().storeUint(randomSeed, 256).endCell())
                             .storeRef(NftItemCodeCell)

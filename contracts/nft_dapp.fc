@@ -158,7 +158,7 @@ slice calculate_collection_address(cell state_init) {
 
   (slice value, int f) = udict_get?(collections_dict, 64, collection_id);
 
-  return (value~load_msg_addr());
+  return value~load_msg_addr();
 
 }
 
@@ -170,9 +170,9 @@ slice calculate_collection_address(cell state_init) {
 
   messages::send_with_stateinit(amount_for_mint, collection_addr, state_init, (begin_cell().end_cell()), NORMAL);
 
-  cell new_collections_dict = udict_set(collections_dict, 64, next_collection_index, collection_addr);
+  cell new_collections_dict = udict_set(collections_dict, 64, next_collection_index, begin_cell().store_slice(collection_addr).end_cell().begin_parse());
 
-  return (new_collections_dict);
+  return new_collections_dict;
 
 }
 

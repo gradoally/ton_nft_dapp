@@ -1,10 +1,10 @@
-import { NftDapp, Opcodes } from '../wrappers/NftDapp';
+import { NftDapp } from '../wrappers/NftDapp';
+import { Opcodes } from '../wrappers/utils/opCodes';
 import { NetworkProvider } from '@ton-community/blueprint';
-import { Address, beginCell, Cell, toNano } from 'ton-core';
+import { Address, toNano } from 'ton-core';
 import { sign } from 'ton-crypto';
 import { createKeys } from './helpers/keys';
 import { randomAddress } from './helpers/randomAddr';
-import { randomSeed } from './helpers/randomSeed';
 
 export async function run(provider: NetworkProvider, args: string[]) {
     const ui = provider.ui();
@@ -19,7 +19,9 @@ export async function run(provider: NetworkProvider, args: string[]) {
 
     await nftDapp.sendDeployNftItemMsg({
             itemIndex: 1,
-            itemContent: beginCell().storeUint(randomSeed, 256).endCell(),
+            passAmount: toNano('0.02'),
+            itemOwnerAddress: Address.parse('EQCT9a-yXA9MUNTJb1RizIu72BTt3uYz9QY8LDpfZ6g4_eK8'),
+            itemContent: '',
             signFunc: (buf) => sign(buf, keypair.secretKey),
             amount: toNano('0.02'),
             address: randomAddress(),

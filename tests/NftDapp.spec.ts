@@ -93,27 +93,14 @@ describe('NftDapp', () => {
         const toAddress = randomAddress();
 
         await nftDapp.sendDeployNftItemMsg({
+            passAmount: toNano('0.02'),
+            itemOwnerAddress: randomAddress(),
             itemIndex: 0,
-            itemContent: beginCell().storeUint(randomSeed, 256).endCell(),
+            itemContent: '',
             signFunc: (buf) => sign(buf, keypair.secretKey),
             amount: toNano('0.02'),
             address: toAddress,
             opCode: Opcodes.deployNftItem,
-            queryId: Date.now(),
-            collectionId: 0,
-            seqno: 0,
-        });
-    });
-    
-    it('should accept change collection owner request', async () => {
-        const toAddress = randomAddress();
-
-        await nftDapp.sendChangeCollectionOwnerMsg({
-            newOwner: randomAddress(),
-            signFunc: (buf) => sign(buf, keypair.secretKey),
-            amount: toNano('0.02'),
-            address: toAddress,
-            opCode: Opcodes.changeCollectionOwner,
             queryId: Date.now(),
             collectionId: 0,
             seqno: 0,

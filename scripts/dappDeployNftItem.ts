@@ -18,16 +18,16 @@ export async function run(provider: NetworkProvider, args: string[]) {
     const seqno = await nftDapp.getSeqno();
 
     await nftDapp.sendDeployNftItemMsg({
-            itemIndex: 1,
+            itemIndex: 0,
             passAmount: toNano('0.02'),
-            itemOwnerAddress: Address.parse('EQCT9a-yXA9MUNTJb1RizIu72BTt3uYz9QY8LDpfZ6g4_eK8'),
+            itemOwnerAddress: Address.parse('EQCAzGqV5MfFh2Bu42kTXfBdUHs3vd3-BOcu3Pnid-H5eB7l'),
             itemContent: '',
             signFunc: (buf) => sign(buf, keypair.secretKey),
             amount: toNano('0.02'),
             address: randomAddress(),
             opCode: Opcodes.deployNftItem,
             queryId: Date.now(),
-            collectionId: 3,
+            collectionId: 0,
             seqno: seqno,
     });
 

@@ -25,7 +25,7 @@ export async function run(provider: NetworkProvider, args: string[]) {
             address: randomAddress(),
             opCode: Opcodes.changeCollectionOwner,
             queryId: Date.now(),
-            collectionId: 3,
+            collectionId: 0,
             seqno: seqno,
     });
 

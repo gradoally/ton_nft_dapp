@@ -37,7 +37,7 @@ export async function run(provider: NetworkProvider, args: string[]) {
         address: randomAddress(),
         opCode: Opcodes.batchNftDeploy,
         queryId: Date.now(),
-        collectionId: 3,
+        collectionId: 0,
         seqno: seqno,
     });
 

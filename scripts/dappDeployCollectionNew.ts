@@ -24,8 +24,8 @@ export async function run(provider: NetworkProvider, args: string[]) {
  
     const collectionCodeCell = CollectionCodeCell;
     const collectionDataCell = beginCell()
-                            .storeAddress(Address.parse("EQCT9a-yXA9MUNTJb1RizIu72BTt3uYz9QY8LDpfZ6g4_eK8"))
-                            .storeUint(3, 64)
+                            .storeAddress(Address.parse("EQCAzGqV5MfFh2Bu42kTXfBdUHs3vd3-BOcu3Pnid-H5eB7l"))
+                            .storeUint(0, 64)
                             .storeRef(beginCell().storeUint(randomSeed, 256).endCell())
                             .storeRef(NftItemCodeCell)
                             .storeRef(
@@ -45,7 +45,7 @@ export async function run(provider: NetworkProvider, args: string[]) {
         address: randomAddress(),
         opCode: Opcodes.deployCollection,
         queryId: Date.now(),
-        collectionId: 3,
+        collectionId: 0,
         seqno: seqno,
     });
 

@@ -182,7 +182,7 @@ slice calculate_collection_address(cell state_init) {
 
   cell msg_body = begin_cell().store_uint(query_id, 64).store_uint(item_index, 64).store_uint(exit_code, 8).end_cell();
 
-  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS);
+  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS + 2);
 
 }
 
@@ -192,7 +192,7 @@ slice calculate_collection_address(cell state_init) {
 
   cell msg_body = begin_cell().store_uint(op::deploy_nft_item, 32).store_uint(query_id, 64).store_uint(item_index, 64).store_coins(amount).store_ref(nft_content).end_cell();
 
-  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS);
+  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS + 2);
 
 }
 
@@ -202,7 +202,7 @@ slice calculate_collection_address(cell state_init) {
 
   cell msg_body = begin_cell().store_uint(op::batch_nft_deploy, 32).store_uint(query_id, 64).store_ref(deploy_list).end_cell();
 
-  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS);
+  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS + 2);
 
 }
 
@@ -212,7 +212,7 @@ slice calculate_collection_address(cell state_init) {
 
   cell msg_body = begin_cell().store_uint(op::edit_nft_content, 32).store_uint(query_id, 64).store_ref(new_content).store_ref(royalty_params).end_cell();
   
-  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS);  ;; sender_addr is provided for security
+  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS + 2);  ;; sender_addr is provided for security
 
 }
 
@@ -222,7 +222,7 @@ slice calculate_collection_address(cell state_init) {
 
   cell msg_body = begin_cell().store_uint(op::change_collection_owner, 32).store_uint(query_id, 64).store_slice(new_owner_addr).end_cell();
   
-  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS);
+  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS + 2);
 
 }
 
@@ -232,7 +232,7 @@ slice calculate_collection_address(cell state_init) {
 
   cell msg_body = begin_cell().store_uint(op::upgrade_collection_code, 32).store_uint(query_id, 64).store_ref(new_collection_code).end_cell();
 
-  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS);
+  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS + 2);
 
 }
 

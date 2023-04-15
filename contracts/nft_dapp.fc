@@ -139,18 +139,18 @@ slice calculate_collection_address(cell state_init) {
 
 }
 
-() deploy_nft_item (slice sender_address, int collection_id, int query_id, int item_index, int amount, cell nft_content) impure {
+() deploy_nft_item (int collection_id, int query_id, int item_index, int amount, cell nft_content) impure {
   
   slice collection_address = return_collection_addr_by_id(collection_id);
 
   slice in_msg_body = begin_cell().store_uint(op::deploy_nft_item, 32).store_uint(query_id, 64).store_uint(item_index, 64).store_coins(amount).store_ref(nft_content).end_cell().begin_parse();
   cell msg_body = begin_cell().store_slice(in_msg_body).end_cell();
 
-  messages::send_via_proxy2(sender_address, ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS + 2);
+  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS + 2);
 
 }
 
-() batch_nft_deploy (slice sender_address, int collection_id, int query_id, cell deploy_list) impure {
+() batch_nft_deploy (int collection_id, int query_id, cell deploy_list) impure {
 
   slice collection_address = return_collection_addr_by_id(collection_id);
 
@@ -158,7 +158,7 @@ slice calculate_collection_address(cell state_init) {
 
   cell msg_body = begin_cell().store_slice(in_msg_body).end_cell();
 
-  messages::send_via_proxy2(sender_address, ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS + 2);
+  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS + 2);
 
 }
 
@@ -244,7 +244,7 @@ slice calculate_collection_address(cell state_init) {
 
     if (op == op::deploy_nft_item) {
 
-      deploy_nft_item(sender_address, collection_id, query_id, in_msg_body~load_uint(64), MIN_DEPLOY_AMOUNT, in_msg_body~load_ref());
+      deploy_nft_item(collection_id, query_id, in_msg_body~load_uint(64), MIN_DEPLOY_AMOUNT, in_msg_body~load_ref());
 
       return ();
 
@@ -252,7 +252,7 @@ slice calculate_collection_address(cell state_init) {
 
     if (op == op::batch_nft_deploy) {
 
-      batch_nft_deploy(sender_address, collection_id, query_id, in_msg_body~load_ref());
+      batch_nft_deploy(collection_id, query_id, in_msg_body~load_ref());
 
       return ();
 

@@ -17,7 +17,7 @@ export async function run(provider: NetworkProvider, args: string[]) {
  
     const collectionCodeCell = CollectionCodeCell;
     const collectionDataCell = beginCell()
-                            .storeAddress(Address.parse("EQAYOUSnRhrWuzI-fjheXffT4ptStltkt7634zf159ls_Egf"))
+                            .storeAddress(Address.parse("EQBdEoP1464NbHwyTDJO9Re7ZVPIqjwYpriewryjOideLXm6"))
                             .storeUint(0, 64)
                             .storeRef(beginCell().storeUint(randomSeed, 256).endCell())
                             .storeRef(NftItemCodeCell)

@@ -21,3 +21,5 @@ function calcTable() {
         crc32_table[i] = r;
     }
 }
+
+console.log(crc32("op::deploy_nft_item"));

@@ -12,7 +12,7 @@ export async function run(provider: NetworkProvider, args: string[]) {
 
     await nftDapp.sendDeployNftItemMsg(provider.sender(), {
             itemIndex: 0,
-            itemOwnerAddress: Address.parse('EQAYOUSnRhrWuzI-fjheXffT4ptStltkt7634zf159ls_Egf'),
+            itemOwnerAddress: Address.parse('EQBdEoP1464NbHwyTDJO9Re7ZVPIqjwYpriewryjOideLXm6'),
             itemContent: '',
             value: toNano('0.2'),
             queryId: 123,

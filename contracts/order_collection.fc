@@ -135,7 +135,7 @@ slice calculate_nft_item_address(int wc, cell state_init) {
       save_data(new_owner, next_item_index, content, nft_item_code, royalty_params);
       return ();
     }
-    if (op == op::edit_nft_content) { ;; change content
+    if (op == op::edit_collection_content) { ;; change content
       save_data(owner_address, next_item_index, in_msg_body~load_ref(), nft_item_code, in_msg_body~load_ref());
       return ();
     }

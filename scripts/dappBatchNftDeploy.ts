@@ -30,7 +30,7 @@ export async function run(provider: NetworkProvider, args: string[]) {
         ],
         value: toNano('0.1'),
         address: randomAddress(),
-        queryId: 123,
+        queryId: Date.now(),
         collectionId: 0,
     });
 

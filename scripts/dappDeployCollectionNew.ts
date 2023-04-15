@@ -1,7 +1,7 @@
 import { NftDapp } from '../wrappers/NftDapp';
 import { NetworkProvider } from '@ton-community/blueprint';
 import { Address, beginCell, Cell, toNano } from 'ton-core';
-import { AdminCollectionCodeCell, CollectionCodeCell } from './helpers/collectionsCode';
+import { CollectionCodeCell } from './helpers/collectionsCode';
 import { NftItemCodeCell } from './helpers/nftItemCode';
 import { randomAddress } from './helpers/randomAddr';
 import { randomSeed } from './helpers/randomSeed';
@@ -17,7 +17,7 @@ export async function run(provider: NetworkProvider, args: string[]) {
  
     const collectionCodeCell = CollectionCodeCell;
     const collectionDataCell = beginCell()
-                            .storeAddress(Address.parse("EQBdEoP1464NbHwyTDJO9Re7ZVPIqjwYpriewryjOideLXm6"))
+                            .storeAddress(Address.parse("EQBicYiXoL5MWQj_3cToMc35GOq6iOOT4txcHLznvGwQU0aC"))
                             .storeUint(0, 64)
                             .storeRef(beginCell().storeUint(randomSeed, 256).endCell())
                             .storeRef(NftItemCodeCell)
@@ -34,7 +34,7 @@ export async function run(provider: NetworkProvider, args: string[]) {
         collectionCode: collectionCodeCell,
         collectionData: collectionDataCell,
         value: toNano('0.02'),
-        queryId: 123,
+        queryId: Date.now(),
         collectionId: 0,
     });
 

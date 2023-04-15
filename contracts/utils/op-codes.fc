@@ -34,9 +34,7 @@ const op::deploy_collection = "op::deploy_collection"c;
 const op::deploy_nft_item = "op::deploy_nft_item"c;
 const op::batch_nft_deploy = "op::batch_nft_deploy"c;
 const op::change_collection_owner = "op::change_collection_owner"c;
-const op::edit_nft_content = "op::edit_nft_content"c;
-const op::upgrade_collection_code = "op::upgrade_collection_code"c;
-
+const op::edit_collection_content = "op::edit_collection_content"c;
 const op::change_owner = "op::change_owner"c; ;; change dapp owner
 const op::withdraw_funds = "op::withdraw_funds"c; ;; withdraw funds from dapp
 

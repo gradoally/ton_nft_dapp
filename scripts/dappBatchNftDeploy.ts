@@ -13,32 +13,25 @@ export async function run(provider: NetworkProvider, args: string[]) {
 
     const nftDapp = provider.open(NftDapp.createFromAddress(address));
 
-    const keypair = await createKeys();
-
-    const seqno = await nftDapp.getSeqno();
-
-    await nftDapp.sendBatchNftDeployMsg({
+    await nftDapp.sendBatchNftDeployMsg(provider.sender(), {
         nfts: [
             {
-                passAmount: toNano('0.5'),
+                passAmount: toNano('0.05'),
                 index: 0,
                 ownerAddress: randomAddress(),
                 content: '1'
             },
             {
-                passAmount: toNano('0.5'),
+                passAmount: toNano('0.05'),
                 index: 1,
                 ownerAddress: randomAddress(),
                 content: '2'
             },
         ],
-        signFunc: (buf) => sign(buf, keypair.secretKey),
-        amount: toNano('0.02'),
+        value: toNano('0.1'),
         address: randomAddress(),
-        opCode: Opcodes.batchNftDeploy,
-        queryId: Date.now(),
+        queryId: 123,
         collectionId: 0,
-        seqno: seqno,
     });
 
     ui.write("Successfully deployed batch of nfts!");

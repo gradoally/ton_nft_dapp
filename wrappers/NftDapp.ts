@@ -105,129 +105,100 @@ export class NftDapp implements Contract {
                 .endCell(),
         });
     }
-
-
-    // External 
-
+    
     async sendDeployCollectionMsg(
         provider: ContractProvider,
-        params: {
+        via: Sender,
+        opts: {
             collectionCode: Cell;
             collectionData: Cell;
-            address: Address;
-            amount: bigint;
-            opCode: number;
             collectionId: number;
             queryId: number;
-            signFunc: (buf: Buffer) => Buffer;
-            seqno: number;
+            value: bigint;
         }
     ) {
 
-        const cellToSign = beginCell()
-            .storeUint(params.seqno, 32)
-            .storeUint(params.opCode, 32)
-            .storeUint(params.queryId, 64)
-            .storeUint(params.collectionId, 64)
-            .storeRef(params.collectionCode)
-            .storeRef(params.collectionData)
-            .endCell();
-
-        const sig = params.signFunc(cellToSign.hash());
-
-        await provider.external(
-            beginCell()
-              .storeBuffer(sig)
-              .storeSlice(cellToSign.asSlice())
-              .endCell()
-        );
+        await provider.internal(via, {
+            value: opts.value,
+            sendMode: SendMode.PAY_GAS_SEPARATLY,
+            body: beginCell()
+                .storeUint(Opcodes.deployCollection, 32)
+                .storeUint(opts.queryId, 64)
+                .storeUint(opts.collectionId, 64)
+                .storeRef(opts.collectionCode)
+                .storeRef(opts.collectionData)
+                .endCell(),
+        });
     }
 
     async sendDeployNftItemMsg(
         provider: ContractProvider,
-        params: {
-            passAmount: bigint;
-            itemOwnerAddress: Address;
+        via: Sender,
+        opts: {
             itemIndex: number;
             itemContent: string;
-            address: Address;
-            amount: bigint;
-            opCode: number;
+            value: bigint;
             collectionId: number;
             queryId: number;
-            signFunc: (buf: Buffer) => Buffer;
-            seqno: number;
+            itemOwnerAddress: Address;
         }
     ) {
 
         const itemContent = beginCell();
-        itemContent.storeBuffer(Buffer.from(params.itemContent));
+        itemContent.storeBuffer(Buffer.from(opts.itemContent));
 
         const nftItemMessage = beginCell();
 
-        nftItemMessage.storeAddress(params.itemOwnerAddress);
+        nftItemMessage.storeAddress(opts.itemOwnerAddress);
         nftItemMessage.storeRef(itemContent);
 
-        const cellToSign = beginCell()
-            .storeUint(params.seqno, 32)
-            .storeUint(params.opCode, 32)
-            .storeUint(params.queryId, 64)
-            .storeUint(params.collectionId, 64)
-            .storeUint(params.itemIndex, 64)
-            .storeCoins(params.passAmount)
-            .storeRef(nftItemMessage)
-            .endCell();
-
-        const sig = params.signFunc(cellToSign.hash());
-
-        await provider.external(
-            beginCell()
-              .storeBuffer(sig)
-              .storeSlice(cellToSign.asSlice())
-              .endCell()
-        );
+        await provider.internal(via, {
+            value: opts.value,
+            sendMode: SendMode.PAY_GAS_SEPARATLY,
+            body: beginCell()
+                .storeUint(Opcodes.deployNftItem, 32)
+                .storeUint(opts.queryId, 64)
+                .storeUint(opts.collectionId, 64)
+                .storeUint(opts.itemIndex, 64)
+                .storeRef(nftItemMessage)
+            .endCell()
+        });
 
     }
 
     async sendBatchNftDeployMsg(
         provider: ContractProvider,
-        params: {
+        via: Sender,
+        opts: {
             nfts: CollectionMintItemInput[];
             address: Address;
-            amount: bigint;
-            opCode: number;
+            value: bigint;
             collectionId: number;
             queryId: number;
-            signFunc: (buf: Buffer) => Buffer;
-            seqno: number;
         }
     ) {
-        if (params.nfts.length > 250) {
+        if (opts.nfts.length > 250) {
             throw new Error('Too long list');
         }
       
         const dict = Dictionary.empty(Dictionary.Keys.Uint(64), MintDictValue);
-            for (const item of params.nfts) {
+            for (const item of opts.nfts) {
                 dict.set(item.index, item)
             }
 
-            const cellToSign = beginCell()
-            .storeUint(params.seqno, 32)
-            .storeUint(params.opCode, 32)
-            .storeUint(params.queryId, 64)
-            .storeUint(params.collectionId, 64)
-            .storeDict(dict)
-            .endCell();
-
-        const sig = params.signFunc(cellToSign.hash());
-
-        await provider.external(
-            beginCell()
-              .storeBuffer(sig)
-              .storeSlice(cellToSign.asSlice())
-              .endCell()
-        );
+        await provider.internal(via, {
+            value: opts.value,
+            sendMode: SendMode.PAY_GAS_SEPARATLY,
+            body: beginCell()
+                .storeUint(Opcodes.batchNftDeploy, 32)
+                .storeUint(opts.queryId, 64)
+                .storeUint(opts.collectionId, 64)
+                .storeDict(dict)
+            .endCell()
+        });
     }
+
+    // External 
 
     async sendChangeCollectionOwnerMsg(
         provider: ContractProvider,

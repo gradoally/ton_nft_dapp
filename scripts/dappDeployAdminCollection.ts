@@ -42,13 +42,11 @@ export async function run(provider: NetworkProvider, args: string[]) {
     await nftDapp.sendDeployCollectionMsg({
         collectionCode: collectionCodeCell,
         collectionData: collectionDataCell,
-        signFunc: (buf) => sign(buf, keypair.secretKey),
         amount: toNano('0.02'),
         address: randomAddress(),
         opCode: Opcodes.deployCollection,
         queryId: Date.now(),
         collectionId: 1,
-        seqno: seqno,
     });
 
     ui.write("Admin Collection deployed!");

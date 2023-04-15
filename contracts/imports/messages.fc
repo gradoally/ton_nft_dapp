@@ -72,7 +72,19 @@ const ZERO_AMOUNT = 0;
 		.store_uint(0x10, 6)
 		.store_slice(to)
 		.store_coins(amount)
-		.store_uint(0, 109)
+		.store_uint(0, 107)
+		.store_ref(body)
+	.end_cell();
+    send_raw_message(msg, mode);
+}
+
+() messages::send_via_proxy2(slice sender_address, int amount, slice to, cell body, int mode) impure inline_ref {
+    cell msg = begin_cell()
+		.store_uint(0x10, 6)
+		.store_slice(to)
+		.store_coins(amount)
+		.store_uint(0, 107)
+        .store_slice(sender_address)
 		.store_ref(body)
 	.end_cell();
     send_raw_message(msg, mode);

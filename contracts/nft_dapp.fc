@@ -100,7 +100,99 @@ slice calculate_collection_address(cell state_init) {
   throw(0);
 }
 
-() main (int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
+(slice) return_collection_addr_by_id (int collection_id) inline_ref {
+
+  (_, _, _, _, cell collections_dict) = load_data();
+
+  (slice value, int f) = udict_get?(collections_dict, 64, collection_id);
+
+  throw_unless(666, f);
+
+  return value;
+
+}
+
+() deploy_collection (cell collections_dict, int amount_for_mint, cell collection_code, cell collection_data, int next_collection_index) impure {
+
+  (int seqno, int public_key, slice dapp_owner, int next_collection_index, cell collections_dict) = load_data();
+
+  cell state_init = (generate_init_state_with_data_no_library(collection_code, collection_data)).end_cell(); ;; message_helpers.fc
+  
+  slice collection_addr = calculate_collection_address(state_init);
+
+  messages::send_with_stateinit(amount_for_mint, collection_addr, state_init, (begin_cell().end_cell()), NORMAL);
+
+  cell new_collections_dict = collections_dict.udict_set(64, next_collection_index, collection_addr);
+
+  save_data(seqno, public_key, dapp_owner, next_collection_index + 1, new_collections_dict);
+  ;; return new_collections_dict;
+
+}
+
+() mint_notification (int collection_id, int item_index, int query_id, int exit_code) impure {
+
+  slice collection_address = return_collection_addr_by_id(collection_id);
+
+  cell msg_body = begin_cell().store_uint(query_id, 64).store_uint(item_index, 64).store_uint(exit_code, 8).end_cell();
+
+  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS + 2);
+
+}
+
+() deploy_nft_item (slice sender_address, int collection_id, int query_id, int item_index, int amount, cell nft_content) impure {
+  
+  slice collection_address = return_collection_addr_by_id(collection_id);
+
+  slice in_msg_body = begin_cell().store_uint(op::deploy_nft_item, 32).store_uint(query_id, 64).store_uint(item_index, 64).store_coins(amount).store_ref(nft_content).end_cell().begin_parse();
+  cell msg_body = begin_cell().store_slice(in_msg_body).end_cell();
+
+  messages::send_via_proxy2(sender_address, ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS + 2);
+
+}
+
+() batch_nft_deploy (slice sender_address, int collection_id, int query_id, cell deploy_list) impure {
+
+  slice collection_address = return_collection_addr_by_id(collection_id);
+
+  slice in_msg_body = begin_cell().store_uint(op::batch_nft_deploy, 32).store_uint(query_id, 64).store_ref(deploy_list).end_cell().begin_parse();
+
+  cell msg_body = begin_cell().store_slice(in_msg_body).end_cell();
+
+  messages::send_via_proxy2(sender_address, ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS + 2);
+
+}
+
+() edit_nft_content (int collection_id, int query_id, cell new_content, cell royalty_params) impure {
+
+  slice collection_address = return_collection_addr_by_id(collection_id);
+
+  cell msg_body = begin_cell().store_uint(op::edit_nft_content, 32).store_uint(query_id, 64).store_ref(new_content).store_ref(royalty_params).end_cell();
+  
+  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS + 2);  ;; sender_addr is provided for security
+
+}
+
+() change_collection_owner (int collection_id, int query_id, slice new_owner_addr) impure {
+
+  slice collection_address = return_collection_addr_by_id(collection_id);
+
+  cell msg_body = begin_cell().store_uint(op::change_collection_owner, 32).store_uint(query_id, 64).store_slice(new_owner_addr).end_cell();
+  
+  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS + 2);
+
+}
+
+() upgrade_collection_code (int collection_id, int query_id, cell new_collection_code) impure {
+
+  slice collection_address = return_collection_addr_by_id(collection_id);
+
+  cell msg_body = begin_cell().store_uint(op::upgrade_collection_code, 32).store_uint(query_id, 64).store_ref(new_collection_code).end_cell();
+
+  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS + 2);
+
+}
+
+() recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
 
   slice cs = in_msg_full.begin_parse();
 
@@ -128,115 +220,73 @@ slice calculate_collection_address(cell state_init) {
   throw_unless(405, equal_slices(dapp_owner, sender_address));
 
   int op = in_msg_body~load_uint(32);
+  int query_id = in_msg_body~load_uint(64);
 
-  if (op == op::change_owner) {
+  int collection_id = in_msg_body~load_uint(64);
 
-    change_owner(in_msg_body~load_msg_addr());
 
-    return ();
-  }
+      ;; Deploy Collection
 
-  if (op == op::withdraw_funds) {
+    if (op == op::deploy_collection) {
 
-    withdraw_funds(my_balance, in_msg_body~load_coins());
+      deploy_collection(collections_dict, MIN_DEPLOY_AMOUNT, in_msg_body~load_ref(), in_msg_body~load_ref(), next_collection_index);  
+      
+      return ();
+    }
 
-    return ();
-  }
+    if (op == op::mint_notification) {  ;; nft has just been initialized
 
-  if (op == op::edit_dapp_code) {  ;; edit dapp code
+      mint_notification(collection_id, in_msg_body~load_uint(64), query_id, in_msg_body~load_uint(8));
 
-    upgrade_current_contract_code(in_msg_body~load_ref());
+      return ();
 
-    return ();
+    }
 
-  }
+    if (op == op::deploy_nft_item) {
 
-  throw(0xffff);
-}
+      deploy_nft_item(sender_address, collection_id, query_id, in_msg_body~load_uint(64), MIN_DEPLOY_AMOUNT, in_msg_body~load_ref());
 
-(slice) return_collection_addr_by_id (cell collections_dict, int collection_id) inline_ref {
+      return ();
 
-  (slice value, int f) = udict_get?(collections_dict, 64, collection_id);
+    }
 
-  return value~load_msg_addr();
+    if (op == op::batch_nft_deploy) {
 
-}
+      batch_nft_deploy(sender_address, collection_id, query_id, in_msg_body~load_ref());
 
-(cell) deploy_collection (cell collections_dict, int amount_for_mint, cell collection_code, cell collection_data, int next_collection_index) impure {
+      return ();
 
-  cell state_init = (generate_init_state_with_data_no_library(collection_code, collection_data)).end_cell(); ;; message_helpers.fc
-  
-  slice collection_addr = calculate_collection_address(state_init);
+    }
 
-  messages::send_with_stateinit(amount_for_mint, collection_addr, state_init, (begin_cell().end_cell()), NORMAL);
+    if (op == op::change_collection_owner) {
 
-  cell new_collections_dict = udict_set(collections_dict, 64, next_collection_index, begin_cell().store_slice(collection_addr).end_cell().begin_parse());
+      change_collection_owner(collection_id, query_id, in_msg_body~load_msg_addr());
 
-  return new_collections_dict;
+      return ();
 
-}
+    }
 
-() mint_notification (cell collections_dict, int collection_id, int item_index, int query_id, int exit_code) impure {
+    if (op == op::edit_nft_content) {
 
-  slice collection_address = return_collection_addr_by_id(collections_dict, collection_id);
+      edit_nft_content(collection_id, query_id, in_msg_body~load_ref(), in_msg_body~load_ref());
 
-  cell msg_body = begin_cell().store_uint(query_id, 64).store_uint(item_index, 64).store_uint(exit_code, 8).end_cell();
+      return ();
 
-  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS + 2);
+    }
 
-}
+    if (op == op::upgrade_collection_code) {
 
-() deploy_nft_item (cell collections_dict, int collection_id, int query_id, int item_index, int amount, cell nft_content) impure {
-  
-  slice collection_address = return_collection_addr_by_id(collections_dict, collection_id);
+      upgrade_collection_code(collection_id, query_id, in_msg_body~load_ref());
 
-  cell msg_body = begin_cell().store_uint(op::deploy_nft_item, 32).store_uint(query_id, 64).store_uint(item_index, 64).store_coins(amount).store_ref(nft_content).end_cell();
+      return ();
 
-  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS + 2);
+    }
+
+    throw(0xffffff);
 
 }
 
-() batch_nft_deploy (cell collections_dict, int collection_id, int query_id, cell deploy_list) impure {
-
-  slice collection_address = return_collection_addr_by_id(collections_dict, collection_id);
-
-  cell msg_body = begin_cell().store_uint(op::batch_nft_deploy, 32).store_uint(query_id, 64).store_ref(deploy_list).end_cell();
-
-  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS + 2);
-
-}
-
-() edit_nft_content (cell collections_dict, int collection_id, int query_id, cell new_content, cell royalty_params) impure {
-
-  slice collection_address = return_collection_addr_by_id(collections_dict, collection_id);
-
-  cell msg_body = begin_cell().store_uint(op::edit_nft_content, 32).store_uint(query_id, 64).store_ref(new_content).store_ref(royalty_params).end_cell();
-  
-  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS + 2);  ;; sender_addr is provided for security
-
-}
-
-() change_collection_owner (cell collections_dict, int collection_id, int query_id, slice new_owner_addr) impure {
-
-  slice collection_address = return_collection_addr_by_id(collections_dict, collection_id);
-
-  cell msg_body = begin_cell().store_uint(op::change_collection_owner, 32).store_uint(query_id, 64).store_slice(new_owner_addr).end_cell();
-  
-  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS + 2);
-
-}
-
-() upgrade_collection_code (cell collections_dict, int collection_id, int query_id, cell new_collection_code) impure {
-
-  slice collection_address = return_collection_addr_by_id(collections_dict, collection_id);
-
-  cell msg_body = begin_cell().store_uint(op::upgrade_collection_code, 32).store_uint(query_id, 64).store_ref(new_collection_code).end_cell();
-
-  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS + 2);
-
-}
-
-() recv_external(slice in_msg_body) impure {
+() recv_external(int my_balance, slice in_msg_body) impure {
 
     var signature = in_msg_body~load_bits(512);
     slice cs = in_msg_body;
@@ -256,54 +306,27 @@ slice calculate_collection_address(cell state_init) {
     throw_unless(35, check_signature(slice_hash(in_msg_body), signature, public_key));
 
     int op = cs~load_uint(32);
-    int query_id = cs~load_uint(64);
-
-    int collection_id = cs~load_uint(64);
 
     accept_message();
     cs~touch();
 
     ;; Deploy Collection
 
-    if (op == op::deploy_collection) {
+    if (op == op::change_owner) {
 
-      collections_dict = deploy_collection(collections_dict, MIN_DEPLOY_AMOUNT, cs~load_ref(), cs~load_ref(), next_collection_index);  
-
-    }
-
-    if (op == op::mint_notification) {  ;; nft has just been initialized
-
-      mint_notification(collections_dict, collection_id, cs~load_uint(64), query_id, cs~load_uint(8));
+      change_owner(cs~load_msg_addr());
 
     }
 
-    if (op == op::deploy_nft_item) {
+    if (op == op::withdraw_funds) {
 
-      deploy_nft_item(collections_dict, collection_id, query_id, cs~load_uint(64), MIN_DEPLOY_AMOUNT, cs~load_ref());
-
-    }
-
-    if (op == op::batch_nft_deploy) {
-
-      batch_nft_deploy(collections_dict, collection_id, query_id, cs~load_ref());
+      withdraw_funds(my_balance, cs~load_coins());
 
     }
 
-    if (op == op::change_collection_owner) {
+    if (op == op::edit_dapp_code) {  ;; edit dapp code
 
-      change_collection_owner(collections_dict, collection_id, query_id, cs~load_msg_addr());
-
-    }
-
-    if (op == op::edit_nft_content) {
-
-      edit_nft_content(collections_dict, collection_id, query_id, cs~load_ref(), cs~load_ref());
-
-    }
-
-    if (op == op::upgrade_collection_code) {
-
-      upgrade_collection_code(collections_dict, collection_id, query_id, cs~load_ref());
+      upgrade_current_contract_code(cs~load_ref());
 
     }
 
@@ -311,7 +334,7 @@ slice calculate_collection_address(cell state_init) {
       seqno + 1, 
       public_key,
       dapp_owner,
-      next_collection_index + 1,
+      next_collection_index,
       collections_dict
     ); ;; refactor
 

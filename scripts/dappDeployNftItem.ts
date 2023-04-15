@@ -1,10 +1,7 @@
 import { NftDapp } from '../wrappers/NftDapp';
-import { Opcodes } from '../wrappers/utils/opCodes';
 import { NetworkProvider } from '@ton-community/blueprint';
 import { Address, toNano } from 'ton-core';
-import { sign } from 'ton-crypto';
-import { createKeys } from './helpers/keys';
-import { randomAddress } from './helpers/randomAddr';
+
 
 export async function run(provider: NetworkProvider, args: string[]) {
     const ui = provider.ui();
@@ -13,22 +10,13 @@ export async function run(provider: NetworkProvider, args: string[]) {
 
     const nftDapp = provider.open(NftDapp.createFromAddress(address));
 
-    const keypair = await createKeys();
-
-    const seqno = await nftDapp.getSeqno();
-
-    await nftDapp.sendDeployNftItemMsg({
+    await nftDapp.sendDeployNftItemMsg(provider.sender(), {
             itemIndex: 0,
-            passAmount: toNano('0.02'),
-            itemOwnerAddress: Address.parse('EQCAzGqV5MfFh2Bu42kTXfBdUHs3vd3-BOcu3Pnid-H5eB7l'),
+            itemOwnerAddress: Address.parse('EQAYOUSnRhrWuzI-fjheXffT4ptStltkt7634zf159ls_Egf'),
             itemContent: '',
-            signFunc: (buf) => sign(buf, keypair.secretKey),
-            amount: toNano('0.02'),
-            address: randomAddress(),
-            opCode: Opcodes.deployNftItem,
-            queryId: Date.now(),
+            value: toNano('0.2'),
+            queryId: 123,
             collectionId: 0,
-            seqno: seqno,
     });
 
     ui.write("Nft item successfully deployed!");

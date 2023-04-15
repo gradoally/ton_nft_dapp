@@ -15,7 +15,6 @@ export async function run(provider: NetworkProvider) {
         await compile('NftDapp')
     );
 
-    await provider.deploy(nftDapp, toNano('0.05'));
+    await provider.deploy(nftDapp, toNano('1'));
 
 }
-

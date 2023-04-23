@@ -11,16 +11,17 @@ export async function run(provider: NetworkProvider, args: string[]) {
 
     const nftDapp = provider.open(NftDapp.createFromAddress(address));
 
-    await nftDapp.sendDeployNftItemMsg(provider.sender(), {
+    await nftDapp.sendDeployItemMsg(provider.sender(), {
             itemIndex: 0,
-            itemOwnerAddress: Address.parse('EQBicYiXoL5MWQj_3cToMc35GOq6iOOT4txcHLznvGwQU0aC'),
-            itemContent: 'asdasdasd',
+            itemOwnerAddress: Address.parse('EQARxWqNZakl_Ulh61RcYR4eHpm_0-t-FT2HNVsAGMSencjf'),
+            itemAuthorityAddress: randomAddress(),
+            itemEditorAddress: Address.parse('EQARxWqNZakl_Ulh61RcYR4eHpm_0-t-FT2HNVsAGMSencjf'),
+            itemContent: '1234',
             value: toNano('0.2'),
             queryId: Date.now(),
-            address: randomAddress(),
-            collectionId: 1,
+            collectionId: 2,
     });
 
-    ui.write("Nft item successfully deployed!");
+    ui.write("Item successfully deployed!");
 }
 

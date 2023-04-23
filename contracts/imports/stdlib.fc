@@ -604,3 +604,5 @@ builder store_builder(builder to, builder from) asm "STBR";
 
 int equal_slices(slice a, slice b) asm "SDEQ";
 int builder_null?(builder b) asm "ISNULL";
+
+forall X -> X ~strdump_basic(slice value) impure asm "STRDUMP";

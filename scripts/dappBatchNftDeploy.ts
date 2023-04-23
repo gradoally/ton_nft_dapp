@@ -18,13 +18,13 @@ export async function run(provider: NetworkProvider, args: string[]) {
             {
                 passAmount: toNano('0.05'),
                 index: 0,
-                ownerAddress: randomAddress(),
+                ownerAddress: provider.sender().address as Address,
                 content: '1'
             },
             {
                 passAmount: toNano('0.05'),
                 index: 1,
-                ownerAddress: randomAddress(),
+                ownerAddress: provider.sender().address as Address,
                 content: '2'
             },
         ],

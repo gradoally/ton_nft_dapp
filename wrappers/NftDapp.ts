@@ -63,7 +63,6 @@ export class NftDapp implements Contract {
         opts: {
             collectionCode: Cell;
             collectionData: Cell;
-            collectionId: number;
             queryId: number;
             value: bigint;
         }
@@ -75,34 +74,36 @@ export class NftDapp implements Contract {
             body: beginCell()
                 .storeUint(Opcodes.deployCollection, 32)
                 .storeUint(opts.queryId, 64)
-                .storeUint(opts.collectionId, 64)
                 .storeRef(opts.collectionCode)
                 .storeRef(opts.collectionData)
                 .endCell(),
         });
     }
 
-    async sendDeployNftItemMsg(
+    async sendDeployItemMsg(
         provider: ContractProvider,
         via: Sender,
         opts: {
             itemIndex: number;
             itemContent: string;
             value: bigint;
-            address: Address;
             collectionId: number;
             queryId: number;
             itemOwnerAddress: Address;
+            itemAuthorityAddress?: Address;
+            itemEditorAddress: Address;
         }
     ) {
 
-        const itemContent = beginCell();
-        itemContent.storeBuffer(Buffer.from(opts.itemContent));
+        const nftContent = beginCell();
+        nftContent.storeBuffer(Buffer.from(opts.itemContent));
 
         const nftItemMessage = beginCell();
 
         nftItemMessage.storeAddress(opts.itemOwnerAddress);
-        nftItemMessage.storeRef(itemContent);
+        nftItemMessage.storeRef(nftContent);
+        nftItemMessage.storeAddress(opts.itemAuthorityAddress);
+        nftItemMessage.storeAddress(opts.itemEditorAddress);
 
         await provider.internal(via, {
             value: opts.value,
@@ -123,7 +124,6 @@ export class NftDapp implements Contract {
         via: Sender,
         opts: {
             nfts: CollectionMintItemInput[];
-            address: Address;
             value: bigint;
             collectionId: number;
             queryId: number;
@@ -155,7 +155,6 @@ export class NftDapp implements Contract {
         via: Sender,
         opts: { 
             newOwner: Address;
-            address: Address;
             value: bigint;
             collectionId: number;
             queryId: number;
@@ -174,13 +173,12 @@ export class NftDapp implements Contract {
         });
     }
 
-    async sendEditNftContentMsg(
+    async sendEditCollectionContentMsg(
         provider: ContractProvider,
         via: Sender,
         opts: { 
             newContent: Cell;
             royaltyParams: Cell;
-            address: Address;
             value: bigint;
             collectionId: number;
             queryId: number;
@@ -200,6 +198,67 @@ export class NftDapp implements Contract {
         });
     }
 
+    async sendTransferItemMsg(provider: ContractProvider, via: Sender,
+        opts: {
+            queryId: number;
+            value: bigint;
+            newOwner: Address;
+            itemAddress: Address;
+            responseAddress: Address;
+            fwdAmount?: bigint;
+        }
+    ) {
+        await provider.internal(via, {
+            value: opts.value,
+            sendMode: SendMode.PAY_GAS_SEPARATLY,
+            body: beginCell()
+                .storeUint(Opcodes.transferItem, 32)
+                .storeUint(opts.queryId, 64)
+                .storeAddress(opts.itemAddress)
+                .storeAddress(opts.newOwner)
+                .storeAddress(opts.responseAddress)
+                .storeCoins(opts.fwdAmount || 0)
+            .endCell(),
+        });
+    }
+
+    async sendEditItemContentMsg(provider: ContractProvider, via: Sender,
+        opts: {
+            queryId: number;
+            value: bigint;
+            itemAddress: Address;
+            newContent: Cell;
+        }
+    ) {
+        await provider.internal(via, {
+            value: opts.value,
+            sendMode: SendMode.PAY_GAS_SEPARATLY,
+            body: beginCell()
+                .storeUint(Opcodes.editItemContent, 32)
+                .storeUint(opts.queryId, 64)
+                .storeAddress(opts.itemAddress)
+                .storeRef(opts.newContent)
+            .endCell(),
+        });
+    }
+
+    async sendDestroySbtMsg(provider: ContractProvider, via: Sender,
+        opts: {
+            queryId: number;
+            value: bigint;
+            itemAddress: Address;
+        }
+    ) {
+        await provider.internal(via, {
+            value: opts.value,
+            sendMode: SendMode.PAY_GAS_SEPARATLY,
+            body: beginCell()
+                .storeUint(Opcodes.destroySbtItem, 32)
+                .storeUint(opts.queryId, 64)
+                .storeAddress(opts.itemAddress)
+            .endCell(),
+        });
+    }
 
     // External 
 

@@ -101,10 +101,14 @@ slice calculate_nft_item_address(int wc, cell state_init) {
 
     if (op == op::deploy_nft_item) { ;; deploy new nft
 
-      deploy_nft_item(next_item_index, nft_item_code, in_msg_body~load_coins(), in_msg_body~load_ref());
-      next_item_index += 1;
-      save_data(owner_address, next_item_index, content, nft_item_code, royalty_params);
-
+      int item_index = in_msg_body~load_uint(64);
+      throw_unless(402, item_index <= next_item_index);
+      var is_last = item_index == next_item_index;
+      deploy_nft_item(item_index, nft_item_code, in_msg_body~load_coins(), in_msg_body~load_ref());
+      if (is_last) {
+        next_item_index += 1;
+        save_data(owner_address, next_item_index, content, nft_item_code, royalty_params);
+      }
       return ();
 
     }

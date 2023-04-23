@@ -10,6 +10,7 @@
 #include "imports/stdlib.fc";
 #include "imports/messages.fc";
 #include "imports/test-libs/message_helpers.fc";
+#include "imports/utils.func";
 #include "utils/helpers.fc";
 #include "utils/op-codes.fc";
 #include "utils/constants.fc";
@@ -112,7 +113,8 @@ slice calculate_collection_address(cell state_init) {
 
 }
 
-() deploy_collection (cell collections_dict, int amount_for_mint, cell collection_code, cell collection_data, int next_collection_index) impure {
+() deploy_collection (cell collections_dict, int amount_for_mint, cell collection_code, 
+                                                            cell collection_data, int next_collection_index) impure {
 
   (int seqno, int public_key, slice dapp_owner, int next_collection_index, cell collections_dict) = load_data();
 
@@ -128,21 +130,17 @@ slice calculate_collection_address(cell state_init) {
 
 }
 
-() mint_notification (int collection_id, int item_index, int query_id, int exit_code) impure {
-
-  slice collection_address = return_collection_addr_by_id(collection_id);
-
-  cell msg_body = begin_cell().store_uint(query_id, 64).store_uint(item_index, 64).store_uint(exit_code, 8).end_cell();
-
-  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS + 2);
-
-}
-
-() deploy_nft_item (int collection_id, int query_id, int item_index, int amount, cell nft_content) impure {
+() deploy_item (int collection_id, int query_id, int item_index, int amount, cell nft_content) impure {
   
   slice collection_address = return_collection_addr_by_id(collection_id);
 
-  slice in_msg_body = begin_cell().store_uint(op::deploy_nft_item, 32).store_uint(query_id, 64).store_uint(item_index, 64).store_coins(amount).store_ref(nft_content).end_cell().begin_parse();
+  slice in_msg_body = begin_cell()
+                    .store_uint(op::deploy_nft_item, 32)
+                    .store_uint(query_id, 64)
+                    .store_uint(item_index, 64)
+                    .store_coins(amount)
+                    .store_ref(nft_content)
+                  .end_cell().begin_parse();
 
   cell msg_body = begin_cell().store_slice(in_msg_body).end_cell();
 
@@ -154,7 +152,11 @@ slice calculate_collection_address(cell state_init) {
 
   slice collection_address = return_collection_addr_by_id(collection_id);
 
-  slice in_msg_body = begin_cell().store_uint(op::batch_nft_deploy, 32).store_uint(query_id, 64).store_ref(deploy_list).end_cell().begin_parse();
+  slice in_msg_body = begin_cell()
+                    .store_uint(op::batch_nft_deploy, 32)
+                    .store_uint(query_id, 64)
+                    .store_ref(deploy_list)
+                  .end_cell().begin_parse();
 
   cell msg_body = begin_cell().store_slice(in_msg_body).end_cell();
 
@@ -162,11 +164,16 @@ slice calculate_collection_address(cell state_init) {
 
 }
 
-() edit_nft_content (int collection_id, int query_id, cell new_content, cell royalty_params) impure {
+() edit_collection_content (int collection_id, int query_id, cell new_content, cell royalty_params) impure {
 
   slice collection_address = return_collection_addr_by_id(collection_id);
 
-  slice in_msg_body = begin_cell().store_uint(op::edit_collection_content, 32).store_uint(query_id, 64).store_ref(new_content).store_ref(royalty_params).end_cell().begin_parse();
+  slice in_msg_body = begin_cell()
+                    .store_uint(op::edit_collection_content, 32)
+                    .store_uint(query_id, 64)
+                    .store_ref(new_content)
+                    .store_ref(royalty_params)
+                  .end_cell().begin_parse();
 
   cell msg_body = begin_cell().store_slice(in_msg_body).end_cell();
   
@@ -178,11 +185,72 @@ slice calculate_collection_address(cell state_init) {
 
   slice collection_address = return_collection_addr_by_id(collection_id);
 
-  slice in_msg_body = begin_cell().store_uint(op::change_collection_owner, 32).store_uint(query_id, 64).store_slice(new_owner_addr).end_cell().begin_parse();
+  slice in_msg_body = begin_cell()
+                    .store_uint(op::change_collection_owner, 32)
+                    .store_uint(query_id, 64)
+                    .store_slice(new_owner_addr)
+                  .end_cell().begin_parse();
 
   cell msg_body = begin_cell().store_slice(in_msg_body).end_cell();
   
   messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS + 2);
+
+}
+
+() edit_item_content (slice item_address, int query_id, cell content) impure {
+
+  slice in_msg_body = begin_cell()
+                    .store_uint(op::edit_content, 32)
+                    .store_uint(query_id, 64)
+                    .store_dict(content)
+                  .end_cell().begin_parse();
+
+  cell msg_body = begin_cell().store_slice(in_msg_body).end_cell();
+  
+  messages::send_via_proxy(ZERO_AMOUNT, item_address, msg_body, CARRY_REMAINING_GAS + 2);
+
+}
+
+() destroy_sbt_item (slice item_address, int query_id) impure {
+
+  slice in_msg_body = begin_cell()
+                    .store_uint(op::destroy, 32)
+                    .store_uint(query_id, 64)
+                  .end_cell().begin_parse();
+
+  cell msg_body = begin_cell().store_slice(in_msg_body).end_cell();
+
+  messages::send_via_proxy(ZERO_AMOUNT, item_address, msg_body, CARRY_REMAINING_GAS + 2);
+
+}
+
+() revoke_sbt_item (slice item_address, int query_id) impure {
+
+  slice in_msg_body = begin_cell()
+                  .store_uint(op::revoke, 32)
+                  .store_uint(query_id, 64)
+                .end_cell().begin_parse();
+
+  cell msg_body = begin_cell().store_slice(in_msg_body).end_cell();
+
+  messages::send_via_proxy(ZERO_AMOUNT, item_address, msg_body, CARRY_REMAINING_GAS + 2);
+
+}
+
+() transfer_item (slice item_address, int query_id, slice new_owner_address, slice resp_address, int fwd_amount) impure {
+
+  slice in_msg_body = begin_cell()
+                  .store_uint(op::transfer, 32)
+                  .store_uint(query_id, 64)
+                  .store_slice(new_owner_address)
+                  .store_slice(resp_address)
+                  .store_uint(0, 1)
+                  .store_coins(fwd_amount)
+                .end_cell().begin_parse();
+
+  cell msg_body = begin_cell().store_slice(in_msg_body).end_cell();
+
+  messages::send_via_proxy(ZERO_AMOUNT, item_address, msg_body, CARRY_REMAINING_GAS + 2);
 
 }
 
@@ -217,13 +285,22 @@ int get_smc_balance() method_id {
 
   ) = load_data();
 
-  throw_unless(405, equal_slices(dapp_owner, sender_address));
-
   int op = in_msg_body~load_uint(32);
   int query_id = in_msg_body~load_uint(64);
 
-  int collection_id = in_msg_body~load_uint(64);
+    if (op == op::mint_notification) {  ;; nft has just been initialized
 
+      return ();
+
+    }
+
+    if (op == op::edit_notification) {
+
+      return ();
+
+    }
+
+    throw_unless(405, equal_slices(dapp_owner, sender_address));
 
       ;; Deploy Collection
 
@@ -234,23 +311,19 @@ int get_smc_balance() method_id {
       return ();
     }
 
-    if (op == op::mint_notification) {  ;; nft has just been initialized
-
-      mint_notification(collection_id, in_msg_body~load_uint(64), query_id, in_msg_body~load_uint(8));
-
-      return ();
-
-    }
-
     if (op == op::deploy_nft_item) {
 
-      deploy_nft_item(collection_id, query_id, in_msg_body~load_uint(64), MIN_DEPLOY_AMOUNT, in_msg_body~load_ref());
+      int collection_id = in_msg_body~load_uint(64);
+
+      deploy_item(collection_id, query_id, in_msg_body~load_uint(64), MIN_DEPLOY_AMOUNT, in_msg_body~load_ref());
 
       return ();
 
     }
 
     if (op == op::batch_nft_deploy) {
+
+      int collection_id = in_msg_body~load_uint(64);
 
       batch_nft_deploy(collection_id, query_id, in_msg_body~load_ref());
 
@@ -260,6 +333,8 @@ int get_smc_balance() method_id {
 
     if (op == op::change_collection_owner) {
 
+      int collection_id = in_msg_body~load_uint(64);
+
       change_collection_owner(collection_id, query_id, in_msg_body~load_msg_addr());
 
       return ();
@@ -268,10 +343,35 @@ int get_smc_balance() method_id {
 
     if (op == op::edit_collection_content) {
 
-      edit_nft_content(collection_id, query_id, in_msg_body~load_ref(), in_msg_body~load_ref());
+      int collection_id = in_msg_body~load_uint(64);
+
+      edit_collection_content(collection_id, query_id, in_msg_body~load_ref(), in_msg_body~load_ref());
 
       return ();
 
+    }
+
+    if (op == op::edit_item_content) {
+
+      edit_item_content(in_msg_body~load_msg_addr(), query_id, in_msg_body~load_ref());
+
+      return ();
+
+    }
+
+    if (op == op::destroy_sbt_item) {
+
+      destroy_sbt_item(in_msg_body~load_msg_addr(), query_id);
+
+      return ();
+
+    }
+
+    if (op == op::transfer_item) { ;; transfer order nft to freelancer
+
+      transfer_item(in_msg_body~load_msg_addr(), query_id, in_msg_body~load_msg_addr(), in_msg_body~load_msg_addr(), in_msg_body~load_coins());
+
+      return ();
     }
 
     throw(0xffffff);

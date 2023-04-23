@@ -175,13 +175,6 @@ slice calculate_nft_item_address(int wc, cell state_init) {
       return ();
     }
 
-    if (op == op::upgrade_collection_code) {
-      
-      upgrade_current_contract_code(in_msg_body~load_ref());
-
-      return ();
-    }
-
     throw(0xffff);
 }
 

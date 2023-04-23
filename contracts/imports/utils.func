@@ -5,6 +5,9 @@
 -}
 
 ;; private
+
+#include "stdlib.fc";
+
 (int) _::utils::mod(int x, int y) asm "MOD";
 
 (slice) utils::get_contract_address(int workchain, cell state_init) inline {
@@ -28,10 +31,10 @@
     return wc;
 }
 
-() utils::force_chain(int workchain, slice address, int error_code) impure inline {
-      (int wc) = get_workchain(address);
-    throw_unless(error_code, wc == workchain);
-}
+;; () utils::force_chain(int workchain, slice address, int error_code) impure inline {
+;;       (int wc) = get_workchain(address);
+;;     throw_unless(error_code, wc == workchain);
+;; }
 
 (int) utils::get_query_id() inline {
     return now() + _::utils::mod(cur_lt(), 4294967296);
@@ -44,4 +47,13 @@
         .store_uint(workchain, 8)  ;; Basic workchain
         .store_uint(address, 256) ;; Address hash
     ).end_cell().begin_parse();
+}
+
+_ ~console_log(slice str) impure inline_ref {
+    slice log = begin_cell()
+            .store_slice(str)
+            .end_cell()
+        .begin_parse();
+
+    ~strdump_basic(log);
 }

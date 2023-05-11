@@ -13,11 +13,11 @@ export async function run(provider: NetworkProvider, args: string[]) {
 
     await nftDapp.sendDeployItemMsg(provider.sender(), {
             itemIndex: 0,
-            itemOwnerAddress: Address.parse('EQARxWqNZakl_Ulh61RcYR4eHpm_0-t-FT2HNVsAGMSencjf'),
-            itemAuthorityAddress: randomAddress(),
-            itemEditorAddress: Address.parse('EQARxWqNZakl_Ulh61RcYR4eHpm_0-t-FT2HNVsAGMSencjf'),
-            itemContent: '1234',
-            value: toNano('0.2'),
+            itemOwnerAddress: address,
+            itemEditorAddress: address,
+            itemAuthorityAddress: address,
+            itemContent: '1',
+            value: toNano('0.05'),
             queryId: Date.now(),
             collectionId: 2,
     });

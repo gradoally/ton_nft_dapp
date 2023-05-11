@@ -105,7 +105,7 @@ slice calculate_collection_address(cell state_init) {
 
   (_, _, _, _, cell collections_dict) = load_data();
 
-  (slice value, int f) = udict_get?(collections_dict, 64, collection_id);
+  (slice value, int f) = udict_get?(collections_dict, 256, collection_id);
 
   throw_unless(666, f);
 
@@ -113,8 +113,7 @@ slice calculate_collection_address(cell state_init) {
 
 }
 
-() deploy_collection (cell collections_dict, int amount_for_mint, cell collection_code, 
-                                                            cell collection_data, int next_collection_index) impure {
+() deploy_collection (cell collection_code, cell collection_data) impure {
 
   (int seqno, int public_key, slice dapp_owner, int next_collection_index, cell collections_dict) = load_data();
 
@@ -122,11 +121,13 @@ slice calculate_collection_address(cell state_init) {
   
   slice collection_addr = calculate_collection_address(state_init);
 
-  messages::send_with_stateinit(amount_for_mint, collection_addr, state_init, (begin_cell().end_cell()), NORMAL);
+  messages::send_with_stateinit(50000000, collection_addr, state_init, (begin_cell().end_cell()), NORMAL);
 
-  cell new_collections_dict = collections_dict.udict_set(64, next_collection_index, collection_addr);
+  cell new_collections_dict = collections_dict.udict_set(256, next_collection_index, collection_addr);
 
-  save_data(seqno, public_key, dapp_owner, next_collection_index + 1, new_collections_dict);
+  next_collection_index += 1;
+
+  save_data(seqno, public_key, dapp_owner, next_collection_index, new_collections_dict);
 
 }
 
@@ -144,7 +145,7 @@ slice calculate_collection_address(cell state_init) {
 
   cell msg_body = begin_cell().store_slice(in_msg_body).end_cell();
 
-  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS + 2);
+  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS);
 
 }
 
@@ -291,13 +292,16 @@ int get_smc_balance() method_id {
     if (op == op::mint_notification) {  ;; nft has just been initialized
 
       return ();
-
     }
 
     if (op == op::edit_notification) {
 
       return ();
+    }
 
+    if (op == op::excesses) {
+
+      return ();
     }
 
     throw_unless(405, equal_slices(dapp_owner, sender_address));
@@ -306,9 +310,10 @@ int get_smc_balance() method_id {
 
     if (op == op::deploy_collection) {
 
-      deploy_collection(collections_dict, MIN_DEPLOY_AMOUNT, in_msg_body~load_ref(), in_msg_body~load_ref(), next_collection_index);  
+      deploy_collection(in_msg_body~load_ref(), in_msg_body~load_ref());  
       
       return ();
+
     }
 
     if (op == op::deploy_nft_item) {
@@ -401,8 +406,6 @@ int get_smc_balance() method_id {
 
     accept_message();
     cs~touch();
-
-    ;; Deploy Collection
 
     if (op == op::change_owner) {
 

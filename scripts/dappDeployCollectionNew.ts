@@ -1,9 +1,9 @@
 import { NftDapp } from '../wrappers/NftDapp';
 import { compile, NetworkProvider } from '@ton-community/blueprint';
 import { Address, beginCell, Cell, toNano } from 'ton-core';
-import { CollectionCodeCell } from './helpers/collectionsCode';
 import { randomAddress } from './helpers/randomAddr';
-import { randomSeed } from './helpers/randomSeed';
+import { buildNftCollectionDataCell } from '../wrappers/utils/collectionHelpers';
+import { sleep } from '@ton-community/blueprint/dist/utils';
 
 export async function run(provider: NetworkProvider, args: string[]) {
     const ui = provider.ui();
@@ -12,28 +12,27 @@ export async function run(provider: NetworkProvider, args: string[]) {
 
     const nftDapp = provider.open(NftDapp.createFromAddress(address));
 
-   // const collectionsDictSize = await nftDapp.getNextCollectionIndex(); // current amount of deployed collections
-
-    const collectionDataCell = beginCell()
-                            .storeAddress(Address.parse("EQARxWqNZakl_Ulh61RcYR4eHpm_0-t-FT2HNVsAGMSencjf"))
-                            .storeUint(0, 64)
-                            .storeRef(beginCell().storeUint(randomSeed, 256).endCell())
-                            .storeRef(await compile('CustomersNft'))
-                            .storeRef(
-                              beginCell()
-                                .storeUint(12, 16)
-                                .storeUint(100, 16)
-                                .storeAddress(randomAddress())
-                              .endCell()
-                            )
-                          .endCell();
+    const collectionDataCell = buildNftCollectionDataCell({
+      ownerAddress: address, 
+      nextItemIndex: 0, 
+      collectionContent: '',
+      commonContent: '',
+      nftItemCode: await compile('OrderNft'),
+      royaltyParams: {
+          royaltyFactor: 12,
+          royaltyBase: 100,
+          royaltyAddress: randomAddress()
+      }
+  });
 
     await nftDapp.sendDeployCollectionMsg(provider.sender(), {
-        collectionCode: CollectionCodeCell,
+        collectionCode: await compile('OrderCollection'),
         collectionData: collectionDataCell,
-        value: toNano('0.5'),
+        value: toNano('0.051'),
         queryId: Date.now(),
     });
+
+    sleep(3500);
 
     ui.write("Collection deployed!");
 }

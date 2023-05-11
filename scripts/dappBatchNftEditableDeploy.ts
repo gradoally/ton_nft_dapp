@@ -1,10 +1,6 @@
 import { NftDapp } from '../wrappers/NftDapp';
 import { NetworkProvider } from '@ton-community/blueprint';
 import { Address, toNano } from 'ton-core';
-import { Opcodes } from '../wrappers/utils/opCodes';
-import { sign } from 'ton-crypto';
-import { createKeys } from './helpers/keys';
-import { randomAddress } from './helpers/randomAddr';
 
 export async function run(provider: NetworkProvider, args: string[]) {
     const ui = provider.ui();
@@ -17,22 +13,25 @@ export async function run(provider: NetworkProvider, args: string[]) {
         nfts: [
             {
                 passAmount: toNano('0.05'),
-                index: 0,
-                ownerAddress: provider.sender().address as Address,
+                index: 1,
+                ownerAddress: address,
+                editorAddress: address,
+               // authorityAddress: address,
                 content: '1'
             },
             {
                 passAmount: toNano('0.05'),
-                index: 1,
-                ownerAddress: provider.sender().address as Address,
+                index: 2,
+                ownerAddress: address,
+                editorAddress: address,
+             //   authorityAddress: address,
                 content: '2'
             },
         ],
         value: toNano('0.1'),
-        address: randomAddress(),
         queryId: Date.now(),
-        collectionId: 0,
+        collectionId: 1,
     });
 
-    ui.write("Successfully deployed batch of nfts!");
+    ui.write("Successfully deployed batch of editable nfts!");
 }

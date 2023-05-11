@@ -10,12 +10,18 @@ export async function run(provider: NetworkProvider, args: string[]) {
 
     const nftDapp = provider.open(NftDapp.createFromAddress(address));
 
-    await nftDapp.sendChangeCollectionOwnerMsg(provider.sender(), {
-            newOwner: randomAddress(),
-            value: toNano('0.02'),
-            queryId: Date.now(),
-            collectionId: 0,
+    await nftDapp.sendEditCollectionContentMsg(provider.sender(), {
+        collectionContent: '',
+        commonContent: '',
+        value: toNano('0.02'),
+        queryId: Date.now(),
+        collectionId: 2,
+        royaltyParams: {
+            royaltyFactor: 13,
+            royaltyBase: 100,
+            royaltyAddress: randomAddress()
+        }
     });
 
-    ui.write("Successfully changed collection owner!");
+    ui.write("Successfully changed collection content!");
 }

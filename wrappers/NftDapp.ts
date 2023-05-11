@@ -8,13 +8,13 @@ import {
     Dictionary, 
     Sender, 
     SendMode,  
-    internal, 
-    storeMessageRelaxed,
 } from 'ton-core';
 
 import { Buffer } from 'buffer';
 import { Opcodes } from './utils/opCodes';
-import { CollectionMintItemInput, MintDictValue } from './utils/collectionHelpers';
+import { CollectionMintNftEditable, CollectionMintSbtEditable, MintNftDictValue, MintSbtDictValue } from './utils/nftMintHelpers';
+import { RoyaltyParams } from './utils/collectionHelpers';
+import { encodeOffChainContent } from './utils/nftContent';
 
 export type NftDappConfig = {
     publicKey: Buffer;
@@ -102,7 +102,7 @@ export class NftDapp implements Contract {
 
         nftItemMessage.storeAddress(opts.itemOwnerAddress);
         nftItemMessage.storeRef(nftContent);
-        nftItemMessage.storeAddress(opts.itemAuthorityAddress);
+        nftItemMessage.storeAddress(opts.itemAuthorityAddress);  // This line is for SBT
         nftItemMessage.storeAddress(opts.itemEditorAddress);
 
         await provider.internal(via, {
@@ -123,7 +123,7 @@ export class NftDapp implements Contract {
         provider: ContractProvider,
         via: Sender,
         opts: {
-            nfts: CollectionMintItemInput[];
+            nfts: CollectionMintNftEditable[];
             value: bigint;
             collectionId: number;
             queryId: number;
@@ -133,8 +133,39 @@ export class NftDapp implements Contract {
             throw new Error('Too long list');
         }
       
-        const dict = Dictionary.empty(Dictionary.Keys.Uint(64), MintDictValue);
+        const dict = Dictionary.empty(Dictionary.Keys.Uint(64), MintNftDictValue);
             for (const item of opts.nfts) {
+                dict.set(item.index, item)
+            }
+
+        await provider.internal(via, {
+            value: opts.value,
+            sendMode: SendMode.PAY_GAS_SEPARATLY,
+            body: beginCell()
+                .storeUint(Opcodes.batchNftDeploy, 32)
+                .storeUint(opts.queryId, 64)
+                .storeUint(opts.collectionId, 64)
+                .storeDict(dict)
+            .endCell()
+        });
+    }
+
+    async sendBatchSbtDeployMsg(
+        provider: ContractProvider,
+        via: Sender,
+        opts: {
+            sbts: CollectionMintSbtEditable[];
+            value: bigint;
+            collectionId: number;
+            queryId: number;
+        }
+    ) {
+        if (opts.sbts.length > 250) {
+            throw new Error('Too long list');
+        }
+      
+        const dict = Dictionary.empty(Dictionary.Keys.Uint(64), MintSbtDictValue);
+            for (const item of opts.sbts) {
                 dict.set(item.index, item)
             }
 
@@ -177,13 +208,29 @@ export class NftDapp implements Contract {
         provider: ContractProvider,
         via: Sender,
         opts: { 
-            newContent: Cell;
-            royaltyParams: Cell;
+            collectionContent: string;
+            commonContent: string;
+            royaltyParams: RoyaltyParams;
             value: bigint;
             collectionId: number;
             queryId: number;
         }
     ) {
+
+        const royaltyCell = beginCell();
+        royaltyCell.storeUint(opts.royaltyParams.royaltyFactor, 16);
+        royaltyCell.storeUint(opts.royaltyParams.royaltyBase, 16);
+        royaltyCell.storeAddress(opts.royaltyParams.royaltyAddress);
+
+        const contentCell = beginCell();
+
+        const collectionContent = encodeOffChainContent(opts.collectionContent);
+
+        const commonContent = beginCell();
+        commonContent.storeBuffer(Buffer.from(opts.commonContent));
+
+        contentCell.storeRef(collectionContent);
+        contentCell.storeRef(commonContent);
 
         await provider.internal(via, {
             value: opts.value,
@@ -192,8 +239,8 @@ export class NftDapp implements Contract {
                 .storeUint(Opcodes.editCollectionContent, 32)
                 .storeUint(opts.queryId, 64)
                 .storeUint(opts.collectionId, 64)
-                .storeRef(opts.newContent)
-                .storeRef(opts.royaltyParams)
+                .storeRef(contentCell)
+                .storeRef(royaltyCell)
             .endCell()
         });
     }
@@ -227,9 +274,13 @@ export class NftDapp implements Contract {
             queryId: number;
             value: bigint;
             itemAddress: Address;
-            newContent: Cell;
+            newContent: string;
         }
     ) {
+
+        const nftContent = beginCell();
+        nftContent.storeBuffer(Buffer.from(opts.newContent));
+
         await provider.internal(via, {
             value: opts.value,
             sendMode: SendMode.PAY_GAS_SEPARATLY,
@@ -237,7 +288,7 @@ export class NftDapp implements Contract {
                 .storeUint(Opcodes.editItemContent, 32)
                 .storeUint(opts.queryId, 64)
                 .storeAddress(opts.itemAddress)
-                .storeRef(opts.newContent)
+                .storeRef(nftContent)
             .endCell(),
         });
     }
@@ -338,23 +389,33 @@ export class NftDapp implements Contract {
         );
     }
 
-    async getSeqno(provider: ContractProvider) : Promise<number> {
+    async getSeqno(provider: ContractProvider): Promise<number> {
         const result = await provider.get('get_seqno', []);
         return result.stack.readNumber();
     }
 
-    async getDappData(provider: ContractProvider) : Promise<[Buffer, Address, bigint, Cell]> {
+    async getDappData(provider: ContractProvider): Promise<{ownerAddress: Address, nextCollectionIndex: number}> {
         const result = await provider.get('get_dapp_data', []);
-        return [ 
-            result.stack.readBuffer(), 
-            result.stack.readAddress(), 
-            result.stack.readBigNumber(), 
-            result.stack.readCell() 
-        ];
+        let ownerAddress = result.stack.readAddress();
+        let nextCollectionIndex = result.stack.readNumber();
+        return {
+            ownerAddress,
+            nextCollectionIndex
+        };
+    }
+
+    async getDappOwner(provider: ContractProvider): Promise<Address> {
+        let res = await this.getDappData(provider);
+        return res.ownerAddress;
+    }
+    
+    async getNextCollectionIndex(provider: ContractProvider): Promise<number> {
+        let res = await this.getDappData(provider);
+        return res.nextCollectionIndex;
     }
     
     async getStateBalance(provider: ContractProvider): Promise<bigint> {
-        const state = await provider.getState()
+        const state = await provider.getState();
         return state.balance;
     }
 

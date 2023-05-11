@@ -729,10 +729,10 @@
     "@ton-community/func-js-bin" "0.4.1"
     arg "^5.0.2"
 
-"@ton-community/sandbox@^0.4.0":
-  version "0.4.0"
-  resolved "https://registry.npmjs.org/@ton-community/sandbox/-/sandbox-0.4.0.tgz"
-  integrity sha512-V2PI4hwAN+yw0esfbzD+jHYhBx9wwcj3LFc5rO8Dyth2rl7btudDAQoV9Lkc03cnlwVOSuJAXS+0w95ThnXxOA==
+"@ton-community/sandbox@^0.10.0":
+  version "0.10.0"
+  resolved "https://registry.yarnpkg.com/@ton-community/sandbox/-/sandbox-0.10.0.tgz#804771e15eedff6af6cded9874cbb9a44aeca41c"
+  integrity sha512-OoyisFG1k3GbKB8Sernf5fB7XdKbLB5xZO/C1EgaUwpbMDInzlIOgdA7LEfVddLslenRLwjm9XVtxeVF+XWGJQ==
 
 "@ton-community/test-utils@^0.0.2":
   version "0.0.2"

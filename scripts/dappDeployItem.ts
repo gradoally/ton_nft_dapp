@@ -1,8 +1,6 @@
 import { NftDapp } from '../wrappers/NftDapp';
 import { NetworkProvider } from '@ton-community/blueprint';
-import { Address, toNano } from 'ton-core';
-import { randomAddress } from './helpers/randomAddr';
-
+import { Address } from 'ton-core';
 
 export async function run(provider: NetworkProvider, args: string[]) {
     const ui = provider.ui();
@@ -14,12 +12,10 @@ export async function run(provider: NetworkProvider, args: string[]) {
     await nftDapp.sendDeployItemMsg(provider.sender(), {
             itemIndex: 0,
             itemOwnerAddress: address,
-            itemEditorAddress: address,
             itemAuthorityAddress: address,
-            itemContent: '1',
-            value: toNano('0.05'),
+          // itemContent: '1',
             queryId: Date.now(),
-            collectionId: 2,
+            collectionId: 16,
     });
 
     ui.write("Item successfully deployed!");

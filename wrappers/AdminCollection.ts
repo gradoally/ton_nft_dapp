@@ -1,4 +1,5 @@
 import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, Sender, SendMode } from 'ton-core';
+import { Opcodes } from './utils/opCodes';
 
 export type AdminCollectionConfig = {
     ownerAddress: Address;
@@ -36,6 +37,42 @@ export class AdminCollection implements Contract {
             value,
             sendMode: SendMode.PAY_GAS_SEPARATLY,
             body: beginCell().endCell(),
+        });
+    }
+
+    async sendMint(provider: ContractProvider, via: Sender, 
+        opts: {
+            value: bigint;
+            queryId: number;
+            itemIndex: number;
+            itemOwnerAddress: Address;
+            itemEditorAddress: Address;
+            itemAuthorityAddress: Address;
+            //itemContent: string;
+            amount: bigint;
+        }
+    ) {
+
+        // const nftContent = beginCell();
+        // nftContent.storeBuffer(Buffer.from(opts.itemContent));
+
+        const nftMessage = beginCell();
+
+        nftMessage.storeAddress(opts.itemOwnerAddress);
+        nftMessage.storeAddress(opts.itemAuthorityAddress);
+        nftMessage.storeAddress(opts.itemEditorAddress)
+        //nftMessage.storeRef(nftContent);
+
+        await provider.internal(via, {
+            value: opts.value,
+            sendMode: SendMode.PAY_GAS_SEPARATLY,
+            body: beginCell()
+                .storeUint(Opcodes.deployNftItem, 32)
+                .storeUint(opts.queryId, 64)
+                .storeUint(opts.itemIndex, 64)
+                .storeCoins(opts.amount)
+                .storeRef(nftMessage)
+            .endCell(),
         });
     }
 }

@@ -3,16 +3,13 @@ import { Cell, Dictionary, toNano } from 'ton-core';
 import { NftDapp } from '../wrappers/NftDapp';
 import '@ton-community/test-utils';
 import { compile } from '@ton-community/blueprint';
-import { KeyPair, mnemonicNew, mnemonicToPrivateKey, sign } from 'ton-crypto';
-import { randomAddress } from '../scripts/helpers/randomAddr';
-import { randomKp } from './utils/randomKp';
 import { buildNftCollectionDataCell } from '../wrappers/utils/collectionHelpers';
+import { randomAddress } from '@ton-community/test-utils';
 
 describe('NftDapp', () => {
     let code: Cell;
     let nftDapp: SandboxContract<NftDapp>
     let blockchain: Blockchain;
-    let keypair: KeyPair;
     let owner: SandboxContract<TreasuryContract>;
 
     beforeAll(async () => {
@@ -21,12 +18,10 @@ describe('NftDapp', () => {
 
     beforeEach(async () => {
         blockchain = await Blockchain.create();
-        keypair = await randomKp();
         owner = await blockchain.treasury('owner');
 
         nftDapp = blockchain.openContract(
             NftDapp.createFromConfig({
-                publicKey: keypair.publicKey,
                 ownerAddress: owner.address,
                 nextCollectionIndex: 0,
                 collectionsDict: Dictionary.empty(Dictionary.Keys.Uint(256), Dictionary.Values.Address())
@@ -62,7 +57,6 @@ describe('NftDapp', () => {
             collectionCode: await compile('AdminCollection'),
             collectionData: collectionDataCell,
             queryId: Date.now(),
-            value: toNano('0.05'),
         });
         
         expect(mintCollectionResult.transactions).toHaveTransaction({

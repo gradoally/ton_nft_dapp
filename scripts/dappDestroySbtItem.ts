@@ -10,7 +10,6 @@ export async function run(provider: NetworkProvider, args: string[]) {
     const nftDapp = provider.open(NftDapp.createFromAddress(address));
 
         await nftDapp.sendDestroySbtMsg(provider.sender(), {
-            value: toNano('0.02'),
             queryId: Date.now(),
             itemAddress: Address.parse("EQCIdOdc6__fo1oqwBTaXLEg0RawVanTMe8ahLpZYm4RxffR")
         });

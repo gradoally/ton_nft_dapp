@@ -11,7 +11,6 @@
 #pragma version >=0.4.0;
 #include "imports/stdlib.fc";
 #include "imports/messages.fc";
-#include "utils/helpers.fc";
 #include "utils/op-codes.fc";
 #include "utils/constants.fc";
 #include "utils/params.fc";
@@ -60,7 +59,7 @@ slice calculate_nft_item_address(int wc, cell state_init) {
             .store_uint(4 + 2 + 1, 1 + 4 + 4 + 64 + 32 + 1 + 1 + 1)
             .store_ref(state_init)
             .store_ref(nft_content);
-  send_raw_message(msg.end_cell(), 1); ;; pay transfer fees separately, revert on errors
+  send_raw_message(msg.end_cell(), 1); 
 }
 
 () send_royalty_params(slice to_address, int query_id, slice data) impure inline {
@@ -168,13 +167,6 @@ slice calculate_nft_item_address(int wc, cell state_init) {
       return ();
     }
 
-    if (op == op::edit_collection_content) { ;; change content
-
-      save_data(owner_address, next_item_index, in_msg_body~load_ref(), nft_item_code, in_msg_body~load_ref());
-
-      return ();
-    }
-
     throw(0xffff);
 }
 
@@ -199,13 +191,6 @@ slice get_nft_address_by_index(int index) method_id {
 }
 
 cell get_nft_content(int index, cell individual_nft_content) method_id {
-  var (_, _, content, _, _) = load_data();
-  slice cs = content.begin_parse();
-  cs~load_ref();
-  slice common_content = cs~load_ref().begin_parse();
-  return (begin_cell()
-                      .store_uint(1, 8) ;; offchain tag
-                      .store_slice(common_content)
-                      .store_ref(individual_nft_content)
-          .end_cell());
+    return individual_nft_content;
 }
+

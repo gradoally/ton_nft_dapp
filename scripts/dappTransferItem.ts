@@ -11,7 +11,6 @@ export async function run(provider: NetworkProvider, args: string[]) {
     const nftDapp = provider.open(NftDapp.createFromAddress(address));
 
         await nftDapp.sendTransferItemMsg(provider.sender(), {
-            value: toNano('0.2'),
             fwdAmount: toNano('0.01'),
             queryId: Date.now(),
             newOwner: randomAddress(),

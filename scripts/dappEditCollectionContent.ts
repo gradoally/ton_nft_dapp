@@ -1,7 +1,7 @@
 import { NftDapp } from '../wrappers/NftDapp';
 import { NetworkProvider } from '@ton-community/blueprint';
-import { Address, beginCell, Cell, toNano } from 'ton-core';
-import { randomAddress } from './helpers/randomAddr';
+import { randomAddress } from '@ton-community/test-utils';
+import { Address, toNano } from 'ton-core';
 
 export async function run(provider: NetworkProvider, args: string[]) {
     const ui = provider.ui();
@@ -13,7 +13,6 @@ export async function run(provider: NetworkProvider, args: string[]) {
     await nftDapp.sendEditCollectionContentMsg(provider.sender(), {
         collectionContent: '',
         commonContent: '',
-        value: toNano('0.02'),
         queryId: Date.now(),
         collectionId: 2,
         royaltyParams: {

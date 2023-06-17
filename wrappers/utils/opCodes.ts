@@ -1,4 +1,4 @@
-import { crc32 } from "../../scripts/helpers/crc32";
+import { crc32 } from "./crc32";
 
 export const Opcodes = {
     changeOwner: crc32("op::change_owner"),

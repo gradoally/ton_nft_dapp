@@ -1,6 +1,6 @@
 import { NftDapp } from '../wrappers/NftDapp';
 import { NetworkProvider } from '@ton-community/blueprint';
-import { Address, beginCell, Cell, toNano } from 'ton-core';
+import { Address, toNano } from 'ton-core';
 
 export async function run(provider: NetworkProvider, args: string[]) {
     const ui = provider.ui();
@@ -12,7 +12,6 @@ export async function run(provider: NetworkProvider, args: string[]) {
     await nftDapp.sendEditItemContentMsg(provider.sender(), {
         newContent: '',
         itemAddress: Address.parse("EQAccX36sUCKkTK4UYPrgRgwEZjhdhAqhREVnOuPJ7fwNGPv"),
-        value: toNano('0.2'),
         queryId: Date.now()
          
     });

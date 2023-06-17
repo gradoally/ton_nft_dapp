@@ -11,56 +11,29 @@
 #include "imports/messages.fc";
 #include "imports/test-libs/message_helpers.fc";
 #include "imports/utils.func";
-#include "utils/helpers.fc";
 #include "utils/op-codes.fc";
 #include "utils/constants.fc";
 #include "utils/params.fc";
 
-;;const int user_mint_request = 1;
-;;const int batch_user_mint_request = 2;
-
-(
-  
-  int, 
-  int, 
-  slice, 
-  int,
-  cell
-
-  ) load_data() inline_ref {
+(slice, int, cell) load_data() inline_ref {
 
     slice cs = get_data().begin_parse();
 
     return (
-      cs~load_uint(32), ;; int32 seqno
-      cs~load_uint(256), ;; int256 public_key
       cs~load_msg_addr(), ;; slice dapp_owner
       cs~load_uint(64), ;; int64 next_collection_index
       (cs.slice_bits() > 0 ? cs~load_dict() : new_dict()) ;; cell collections_dict
     );
-
 }
 
-() save_data(
-
-    int seqno, 
-    int public_key,
-    slice dapp_owner,
-    int next_collection_index,
-    cell collections_dict
-
-  ) impure inline {
-
+() save_data(slice dapp_owner, int next_collection_index, cell collections_dict) impure inline {
     set_data(
       begin_cell()
-        .store_int(seqno, 32) ;; int32 seqno
-        .store_uint(public_key, 256) ;; int256 public_key
         .store_slice(dapp_owner) ;; slice dapp_owner
         .store_uint(next_collection_index, 64) ;; int256 public_key
         .store_dict(collections_dict) ;; cell collections_dict
       .end_cell()
     );
-
 }
 
 slice calculate_collection_address(cell state_init) {
@@ -74,20 +47,20 @@ slice calculate_collection_address(cell state_init) {
 
 () change_owner(slice new_owner_addr) impure {
 
-  (int seqno, int public_key, slice dapp_owner, int next_collection_index, cell collections_dict) = load_data();
+  (slice dapp_owner, int next_collection_index, cell collections_dict) = load_data();
 
   force_chain(new_owner_addr);
 
-  save_data(seqno, public_key, new_owner_addr, next_collection_index, collections_dict);
+  save_data(new_owner_addr, next_collection_index, collections_dict);
 }
 
 () withdraw_funds(int my_balance, int withdraw_amount) impure {
 
   throw_unless(407, my_balance + MIN_TONS_FOR_STORAGE > withdraw_amount);
 
-  (_, _, slice dapp_owner,  _, _) = load_data();
+  (slice dapp_owner,  _, _) = load_data();
 
-  messages::send_empty(withdraw_amount, dapp_owner, NORMAL);
+  messages::send_empty(withdraw_amount, dapp_owner, NORMAL + 1);
 }
 
 
@@ -103,7 +76,7 @@ slice calculate_collection_address(cell state_init) {
 
 (slice) return_collection_addr_by_id (int collection_id) inline_ref {
 
-  (_, _, _, _, cell collections_dict) = load_data();
+  (_, _, cell collections_dict) = load_data();
 
   (slice value, int f) = udict_get?(collections_dict, 256, collection_id);
 
@@ -115,7 +88,7 @@ slice calculate_collection_address(cell state_init) {
 
 () deploy_collection (cell collection_code, cell collection_data) impure {
 
-  (int seqno, int public_key, slice dapp_owner, int next_collection_index, cell collections_dict) = load_data();
+  (slice dapp_owner, int next_collection_index, cell collections_dict) = load_data();
 
   cell state_init = (generate_init_state_with_data_no_library(collection_code, collection_data)).end_cell();
   
@@ -127,7 +100,7 @@ slice calculate_collection_address(cell state_init) {
 
   next_collection_index += 1;
 
-  save_data(seqno, public_key, dapp_owner, next_collection_index, new_collections_dict);
+  save_data(dapp_owner, next_collection_index, new_collections_dict);
 
 }
 
@@ -161,7 +134,7 @@ slice calculate_collection_address(cell state_init) {
 
   cell msg_body = begin_cell().store_slice(in_msg_body).end_cell();
 
-  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS + 2);
+  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS);
 
 }
 
@@ -178,7 +151,7 @@ slice calculate_collection_address(cell state_init) {
 
   cell msg_body = begin_cell().store_slice(in_msg_body).end_cell();
   
-  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS + 2);  
+  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS);  
 
 }
 
@@ -194,7 +167,7 @@ slice calculate_collection_address(cell state_init) {
 
   cell msg_body = begin_cell().store_slice(in_msg_body).end_cell();
   
-  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS + 2);
+  messages::send_via_proxy(ZERO_AMOUNT, collection_address, msg_body, CARRY_REMAINING_GAS);
 
 }
 
@@ -208,7 +181,7 @@ slice calculate_collection_address(cell state_init) {
 
   cell msg_body = begin_cell().store_slice(in_msg_body).end_cell();
   
-  messages::send_via_proxy(ZERO_AMOUNT, item_address, msg_body, CARRY_REMAINING_GAS + 2);
+  messages::send_via_proxy(ZERO_AMOUNT, item_address, msg_body, CARRY_REMAINING_GAS);
 
 }
 
@@ -221,7 +194,7 @@ slice calculate_collection_address(cell state_init) {
 
   cell msg_body = begin_cell().store_slice(in_msg_body).end_cell();
 
-  messages::send_via_proxy(ZERO_AMOUNT, item_address, msg_body, CARRY_REMAINING_GAS + 2);
+  messages::send_via_proxy(ZERO_AMOUNT, item_address, msg_body, CARRY_REMAINING_GAS);
 
 }
 
@@ -234,7 +207,7 @@ slice calculate_collection_address(cell state_init) {
 
   cell msg_body = begin_cell().store_slice(in_msg_body).end_cell();
 
-  messages::send_via_proxy(ZERO_AMOUNT, item_address, msg_body, CARRY_REMAINING_GAS + 2);
+  messages::send_via_proxy(ZERO_AMOUNT, item_address, msg_body, CARRY_REMAINING_GAS);
 
 }
 
@@ -251,17 +224,11 @@ slice calculate_collection_address(cell state_init) {
 
   cell msg_body = begin_cell().store_slice(in_msg_body).end_cell();
 
-  messages::send_via_proxy(ZERO_AMOUNT, item_address, msg_body, CARRY_REMAINING_GAS + 2);
+  messages::send_via_proxy(ZERO_AMOUNT, item_address, msg_body, CARRY_REMAINING_GAS);
 
 }
 
-int get_smc_balance() method_id {
-    [int balance, _] = get_balance();
-
-    return balance;
-}
-
-() recv_internal(cell in_msg_full, slice in_msg_body) impure {
+() recv_internal(int balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
 
   slice cs = in_msg_full.begin_parse();
 
@@ -276,15 +243,7 @@ int get_smc_balance() method_id {
     return (); 
   }
 
-  (
-
-    int seqno, 
-    int public_key,
-    slice dapp_owner,
-    int next_collection_index,
-    cell collections_dict
-
-  ) = load_data();
+  (slice dapp_owner, int next_collection_index, cell collections_dict) = load_data();
 
   int op = in_msg_body~load_uint(32);
   int query_id = in_msg_body~load_uint(64);
@@ -379,95 +338,40 @@ int get_smc_balance() method_id {
       return ();
     }
 
-    throw(0xffffff);
-
-}
-
-() recv_external(slice in_msg_body) impure {
-
-    var signature = in_msg_body~load_bits(512);
-    slice cs = in_msg_body;
-
-    int msg_segno = cs~load_uint(32);
-
-    (
-      int seqno, 
-      int public_key,
-      slice dapp_owner,
-      int next_collection_index,
-      cell collections_dict
-
-    ) = load_data();
-
-    throw_unless(33, msg_segno == seqno);
-    throw_unless(35, check_signature(slice_hash(in_msg_body), signature, public_key));
-
-    int op = cs~load_uint(32);
-
-    accept_message();
-    cs~touch();
-
     if (op == op::change_owner) {
 
       change_owner(cs~load_msg_addr());
 
+      return ();
     }
 
     if (op == op::withdraw_funds) {
 
-      withdraw_funds(get_smc_balance(), cs~load_coins());
+      withdraw_funds(balance, cs~load_coins());
 
+      return ();
     }
 
     if (op == op::edit_dapp_code) {  ;; edit dapp code
 
-      upgrade_current_contract_code(cs~load_ref());
+      edit_code(cs~load_ref());
 
+      return ();
     }
 
-    save_data(
-      seqno + 1, 
-      public_key,
-      dapp_owner,
-      next_collection_index,
-      collections_dict
-    ); ;; refactor
+    throw(0xffffff);
 
 }
 
 ;; Getters
 
-int get_seqno() method_id {
-  (int seqno, _, _, _, _) = load_data();
-  return seqno;
-}
-
-(int, slice, int, cell) get_dapp_data() method_id {
-  (_, int public_key, slice dapp_owner, int next_collection_index, cell collections_dict) = load_data();
+(slice, int, cell) get_dapp_data() method_id {
+  (slice dapp_owner, int next_collection_index, cell collections_dict) = load_data();
   return (
-    public_key,
     dapp_owner,
     next_collection_index,
     collections_dict
   );
 }
 
-var get_deployed_collections_addrs() method_id {
-
-    (_, _, _, _, cell collections_dict) = load_data();
-
-    int idx = 0x7fffffff;  ;; max uint32 
-    var l = null();
-    do {
-        (idx, slice coll, var f) = collections_dict.udict_get_prev?(64, idx);
-        if (f) {
-            slice coll_addr = coll~load_msg_addr();
-
-            l = cons(coll_addr, l);
-        }
-
-    } until ( ~ f)
-
-    return l; ;; return list of deployed_collections_addrs
-}
 

@@ -35,6 +35,7 @@ const op::deploy_nft_item = "op::deploy_nft_item"c;
 const op::batch_nft_deploy = "op::batch_nft_deploy"c;
 const op::change_collection_owner = "op::change_collection_owner"c;
 const op::edit_collection_content = "op::edit_collection_content"c;
+const op::change_record = "op::change_record"c;
 const op::edit_item_content = "op::edit_item_content"c;
 const op::destroy_sbt_item = "op::destroy_sbt_item"c;
 const op::transfer_item = "op::transfer_item"c;

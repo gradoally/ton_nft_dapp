@@ -34,7 +34,7 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
 ;;  MsgAddressInt editor_address
 ;;
 
-(int, int, slice, slice, cell, slice) load_data() {
+(int, int, slice, slice, cell, slice) load_data() inline {
     slice ds = get_data().begin_parse();
     var (index, collection_address) = (ds~load_uint(64), ds~load_msg_addr());
     if (ds.slice_bits() > 0) {
@@ -160,7 +160,8 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
 
       throw_unless(405, equal_slices(collection_address, sender_address));
 
-      store_data(index, collection_address, in_msg_body~load_msg_addr(), in_msg_body~load_ref(), in_msg_body~load_msg_addr());  
+      store_data(index, collection_address, in_msg_body~load_msg_addr(), 
+              begin_cell().store_uint(0, 8).store_dict(new_dict()).end_cell(), in_msg_body~load_msg_addr());  
 
       return ();
     }
@@ -183,21 +184,31 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
     if (op == op::edit_content) {
       throw_unless(410, equal_slices(sender_address, editor_address));
       store_data(index, collection_address, owner_address, in_msg_body~load_ref(), editor_address);
-
-      send_msg(
-
-            flag::regular(), 
-            editor_address, 
-            ZERO_AMOUNT, 
-            op::edit_notification, 
-            query_id, 
-            begin_cell().store_slice(collection_address).store_uint(SUCCESS, 32), 
-            CARRY_REMAINING_GAS
-
-      );
-
       return ();
     }
+    if (op == op::change_record) { 
+        throw_unless(411, equal_slices(sender_address, owner_address));
+        int key = in_msg_body~load_uint(256);
+        int has_value = in_msg_body.slice_refs() > 0;
+
+        slice cs = content.begin_parse();
+        throw_unless(412, cs~load_uint(8) == 0); ;; data onchain tag
+        cell keyvalue_map = cs~load_dict();
+
+        if (has_value) {
+            cell value = in_msg_body~load_ref();
+
+            keyvalue_map~udict_set_ref(256, key, value);
+        } else {
+            keyvalue_map~udict_delete?(256, key);
+        }
+
+        content = begin_cell().store_uint(0, 8).store_dict(keyvalue_map).end_cell();
+
+        store_data(index, collection_address, owner_address, content, editor_address);
+        return ();
+    }
+
     throw(0xffff);
 }
 

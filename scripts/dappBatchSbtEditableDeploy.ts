@@ -28,9 +28,8 @@ export async function run(provider: NetworkProvider, args: string[]) {
                 content: '2'
             },
         ],
-        value: toNano('0.1'),
         queryId: Date.now(),
-        collectionId: 3,
+        collectionId: 0,
     });
 
     ui.write("Successfully deployed batch of editable sbts!");

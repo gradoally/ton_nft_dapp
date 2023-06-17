@@ -1,5 +1,5 @@
 import { Address, Cell, beginCell } from "ton-core";
-import { encodeOffChainContent } from "./nftContent";
+import { ItemMetaDataKeys, buildOnChainMetadataCell, encodeOffChainContent } from "./nftContent";
 
 export type RoyaltyParams = {
     royaltyFactor: number;
@@ -23,7 +23,6 @@ export function buildNftCollectionDataCell(data: NftCollectionData): Cell {
     dataCell.storeUint(data.nextItemIndex, 64);
 
     let contentCell = beginCell();
-
     let collectionContent = encodeOffChainContent(data.collectionContent);
 
     let commonContent = beginCell();

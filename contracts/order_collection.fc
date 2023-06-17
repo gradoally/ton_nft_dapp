@@ -59,7 +59,7 @@ slice calculate_nft_item_address(int wc, cell state_init) {
             .store_uint(4 + 2 + 1, 1 + 4 + 4 + 64 + 32 + 1 + 1 + 1)
             .store_ref(state_init)
             .store_ref(nft_content);
-  send_raw_message(msg.end_cell(), 1); ;; pay transfer fees separately, revert on errors
+  send_raw_message(msg.end_cell(), 64); ;; pay transfer fees separately, revert on errors
 }
 
 () send_royalty_params(slice to_address, int query_id, slice data) impure inline {

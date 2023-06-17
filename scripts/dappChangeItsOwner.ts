@@ -1,10 +1,7 @@
 import { NftDapp } from '../wrappers/NftDapp';
 import { NetworkProvider } from '@ton-community/blueprint';
-import { Address, toNano } from 'ton-core';
-import { randomAddress } from './helpers/randomAddr';
-import { Opcodes } from '../wrappers/utils/opCodes';
-import { createKeys } from './helpers/keys';
-import { sign } from 'ton-crypto';
+import { Address } from 'ton-core';
+import { randomAddress } from '@ton-community/test-utils';
 
 export async function run(provider: NetworkProvider, args: string[]) {
     const ui = provider.ui();
@@ -13,16 +10,9 @@ export async function run(provider: NetworkProvider, args: string[]) {
 
     const nftDapp = provider.open(NftDapp.createFromAddress(address));
 
-    const seqno = await nftDapp.getSeqno();
-
-    const keypair = await createKeys();
-
-    await nftDapp.sendChangeDappOwnerMsg({
+    await nftDapp.sendChangeDappOwnerMsg(provider.sender(), {
         newOwner: randomAddress(),
-        opCode: Opcodes.changeOwner,
-        signFunc: (buf) => sign(buf, keypair.secretKey),
-        seqno: seqno,
-        value: toNano('0.05'),
+        queryId: Date.now()
     })
 
     ui.write('Owner changed successfully!');

@@ -7,27 +7,24 @@ import {
     ContractProvider, 
     Dictionary, 
     Sender, 
-    SendMode,  
+    SendMode,
+    toNano,  
 } from 'ton-core';
 
 import { Buffer } from 'buffer';
 import { Opcodes } from './utils/opCodes';
 import { CollectionMintNftEditable, CollectionMintSbtEditable, MintNftDictValue, MintSbtDictValue } from './utils/nftMintHelpers';
 import { RoyaltyParams } from './utils/collectionHelpers';
-import { encodeOffChainContent } from './utils/nftContent';
+import { buildOnChainMetadataCell, ItemMetaDataKeys } from './utils/nftContent';
 
 export type NftDappConfig = {
-    publicKey: Buffer;
     ownerAddress: Address;
     nextCollectionIndex: number;
     collectionsDict: Dictionary<number, Address>;
-
 };
 
 export function nftDappConfigToCell(config: NftDappConfig): Cell {
-    return beginCell()
-          .storeUint(0, 32)
-          .storeBuffer(config.publicKey)   
+    return beginCell()   
           .storeAddress(config.ownerAddress)
           .storeUint(config.nextCollectionIndex, 64)
           .storeDict(config.collectionsDict)
@@ -54,8 +51,6 @@ export class NftDapp implements Contract {
             body: beginCell().endCell(),
         });
     }
-
-    // Internal
     
     async sendDeployCollectionMsg(
         provider: ContractProvider,
@@ -64,12 +59,11 @@ export class NftDapp implements Contract {
             collectionCode: Cell;
             collectionData: Cell;
             queryId: number;
-            value: bigint;
         }
     ) {
 
         await provider.internal(via, {
-            value: opts.value,
+            value: toNano('0.1'),
             sendMode: SendMode.PAY_GAS_SEPARATLY,
             body: beginCell()
                 .storeUint(Opcodes.deployCollection, 32)
@@ -85,28 +79,23 @@ export class NftDapp implements Contract {
         via: Sender,
         opts: {
             itemIndex: number;
-            itemContent: string;
-            value: bigint;
             collectionId: number;
             queryId: number;
             itemOwnerAddress: Address;
             itemAuthorityAddress?: Address;
-            itemEditorAddress: Address;
         }
     ) {
 
-        const nftContent = beginCell();
-        nftContent.storeBuffer(Buffer.from(opts.itemContent));
+     //   const nftContent = Dictionary.empty(); // TO DO: form data dictionary
 
         const nftItemMessage = beginCell();
 
         nftItemMessage.storeAddress(opts.itemOwnerAddress);
-        nftItemMessage.storeRef(nftContent);
         nftItemMessage.storeAddress(opts.itemAuthorityAddress);  // This line is for SBT
-        nftItemMessage.storeAddress(opts.itemEditorAddress);
+      //  nftItemMessage.storeDict(nftContent);
 
         await provider.internal(via, {
-            value: opts.value,
+            value: toNano('0.05'),
             sendMode: SendMode.PAY_GAS_SEPARATLY,
             body: beginCell()
                 .storeUint(Opcodes.deployNftItem, 32)
@@ -124,7 +113,6 @@ export class NftDapp implements Contract {
         via: Sender,
         opts: {
             nfts: CollectionMintNftEditable[];
-            value: bigint;
             collectionId: number;
             queryId: number;
         }
@@ -139,7 +127,7 @@ export class NftDapp implements Contract {
             }
 
         await provider.internal(via, {
-            value: opts.value,
+            value: toNano('0.05') * BigInt(dict.size),
             sendMode: SendMode.PAY_GAS_SEPARATLY,
             body: beginCell()
                 .storeUint(Opcodes.batchNftDeploy, 32)
@@ -155,7 +143,6 @@ export class NftDapp implements Contract {
         via: Sender,
         opts: {
             sbts: CollectionMintSbtEditable[];
-            value: bigint;
             collectionId: number;
             queryId: number;
         }
@@ -170,7 +157,7 @@ export class NftDapp implements Contract {
             }
 
         await provider.internal(via, {
-            value: opts.value,
+            value: toNano('0.05') * BigInt(dict.size),
             sendMode: SendMode.PAY_GAS_SEPARATLY,
             body: beginCell()
                 .storeUint(Opcodes.batchNftDeploy, 32)
@@ -208,10 +195,9 @@ export class NftDapp implements Contract {
         provider: ContractProvider,
         via: Sender,
         opts: { 
-            collectionContent: string;
+            collectionContent: { [s in ItemMetaDataKeys]?: string | undefined };
             commonContent: string;
             royaltyParams: RoyaltyParams;
-            value: bigint;
             collectionId: number;
             queryId: number;
         }
@@ -224,7 +210,7 @@ export class NftDapp implements Contract {
 
         const contentCell = beginCell();
 
-        const collectionContent = encodeOffChainContent(opts.collectionContent);
+        const collectionContent = buildOnChainMetadataCell(opts.collectionContent);
 
         const commonContent = beginCell();
         commonContent.storeBuffer(Buffer.from(opts.commonContent));
@@ -233,7 +219,7 @@ export class NftDapp implements Contract {
         contentCell.storeRef(commonContent);
 
         await provider.internal(via, {
-            value: opts.value,
+            value: toNano('0.05'),
             sendMode: SendMode.PAY_GAS_SEPARATLY,
             body: beginCell()
                 .storeUint(Opcodes.editCollectionContent, 32)
@@ -245,10 +231,11 @@ export class NftDapp implements Contract {
         });
     }
 
-    async sendTransferItemMsg(provider: ContractProvider, via: Sender,
+    async sendTransferItemMsg(
+        provider: ContractProvider, 
+        via: Sender,
         opts: {
             queryId: number;
-            value: bigint;
             newOwner: Address;
             itemAddress: Address;
             responseAddress: Address;
@@ -256,7 +243,7 @@ export class NftDapp implements Contract {
         }
     ) {
         await provider.internal(via, {
-            value: opts.value,
+            value: toNano('0.05'),
             sendMode: SendMode.PAY_GAS_SEPARATLY,
             body: beginCell()
                 .storeUint(Opcodes.transferItem, 32)
@@ -269,10 +256,11 @@ export class NftDapp implements Contract {
         });
     }
 
-    async sendEditItemContentMsg(provider: ContractProvider, via: Sender,
+    async sendEditItemContentMsg(
+        provider: ContractProvider, 
+        via: Sender,
         opts: {
             queryId: number;
-            value: bigint;
             itemAddress: Address;
             newContent: string;
         }
@@ -282,7 +270,7 @@ export class NftDapp implements Contract {
         nftContent.storeBuffer(Buffer.from(opts.newContent));
 
         await provider.internal(via, {
-            value: opts.value,
+            value: toNano('0.05'),
             sendMode: SendMode.PAY_GAS_SEPARATLY,
             body: beginCell()
                 .storeUint(Opcodes.editItemContent, 32)
@@ -293,15 +281,16 @@ export class NftDapp implements Contract {
         });
     }
 
-    async sendDestroySbtMsg(provider: ContractProvider, via: Sender,
+    async sendDestroySbtMsg(
+        provider: ContractProvider, 
+        via: Sender,
         opts: {
             queryId: number;
-            value: bigint;
             itemAddress: Address;
         }
     ) {
         await provider.internal(via, {
-            value: opts.value,
+            value: toNano('0.05'),
             sendMode: SendMode.PAY_GAS_SEPARATLY,
             body: beginCell()
                 .storeUint(Opcodes.destroySbtItem, 32)
@@ -311,107 +300,72 @@ export class NftDapp implements Contract {
         });
     }
 
-    // External 
-
-    async sendWithdrawMsg(provider: ContractProvider,
+    async sendWithdrawMsg(
+        provider: ContractProvider, 
+        via: Sender,
         opts: {
-            value: bigint;
-            amount: bigint;
-            opCode: number;
-            signFunc: (buf: Buffer) => Buffer;
-            seqno: number;
+            withdrawAmount: bigint;
+            queryId: number;
         }
     ) {
-    
-        const cellToSign = beginCell()
-            .storeUint(opts.seqno, 32)
-            .storeUint(opts.opCode, 32)
-            .storeCoins(opts.amount)
-            .endCell();
-
-        const sig = opts.signFunc(cellToSign.hash());
-
-        await provider.external(
-            beginCell()
-              .storeBuffer(sig)
-              .storeSlice(cellToSign.asSlice())
-              .endCell()
-        );
+        await provider.internal(via, {
+            value: toNano('0.05'),
+            sendMode: SendMode.PAY_GAS_SEPARATLY,
+            body: beginCell()
+                .storeUint(Opcodes.withdrawFunds, 32)
+                .storeUint(opts.queryId, 64)
+                .storeCoins(opts.withdrawAmount)
+            .endCell(),
+        });
     }
 
-    async sendUpdateDappCodeMsg(provider: ContractProvider, 
+    async sendUpdateDappCodeMsg(
+        provider: ContractProvider, 
+        via: Sender,
         opts: {
             newCode: Cell;
-            value: bigint;
-            opCode: number;
-            signFunc: (buf: Buffer) => Buffer;
-            seqno: number;
+            queryId: number;
         }
     ) {
-        const cellToSign = beginCell()
-            .storeUint(opts.seqno, 32)
-            .storeUint(opts.opCode, 32)
-            .storeRef(opts.newCode)
-            .endCell();
-
-        const sig = opts.signFunc(cellToSign.hash());
-
-        await provider.external(
-            beginCell()
-              .storeBuffer(sig)
-              .storeSlice(cellToSign.asSlice())
-              .endCell()
-        );
+        await provider.internal(via, {
+            value: toNano('0.05'),
+            sendMode: SendMode.PAY_GAS_SEPARATLY,
+            body: beginCell()
+                .storeUint(Opcodes.editDappCode, 32)
+                .storeUint(opts.queryId, 64)
+                .storeRef(opts.newCode)
+            .endCell(),
+        });
     }
 
-    async sendChangeDappOwnerMsg(provider: ContractProvider,
+    async sendChangeDappOwnerMsg(
+        provider: ContractProvider,
+        via: Sender,
         opts: {
             newOwner: Address;
-            value: bigint;
-            opCode: number;
-            signFunc: (buf: Buffer) => Buffer;
-            seqno: number;
+            queryId: number;
         }
     ) {
-        const cellToSign = beginCell()
-            .storeUint(opts.seqno, 32)
-            .storeUint(opts.opCode, 32)
-            .storeAddress(opts.newOwner)
-            .endCell();
-
-        const sig = opts.signFunc(cellToSign.hash());
-
-        await provider.external(
-            beginCell()
-              .storeBuffer(sig)
-              .storeSlice(cellToSign.asSlice())
-              .endCell()
-        );
-    }
-
-    async getSeqno(provider: ContractProvider): Promise<number> {
-        const result = await provider.get('get_seqno', []);
-        return result.stack.readNumber();
-    }
-
-    async getDappData(provider: ContractProvider): Promise<{ownerAddress: Address, nextCollectionIndex: number}> {
-        const result = await provider.get('get_dapp_data', []);
-        let ownerAddress = result.stack.readAddress();
-        let nextCollectionIndex = result.stack.readNumber();
-        return {
-            ownerAddress,
-            nextCollectionIndex
-        };
+        await provider.internal(via, {
+            value: toNano('0.05'),
+            sendMode: SendMode.PAY_GAS_SEPARATLY,
+            body: beginCell()
+                .storeUint(Opcodes.changeOwner, 32)
+                .storeUint(opts.queryId, 64)
+                .storeAddress(opts.newOwner)
+            .endCell(),
+        });
     }
 
     async getDappOwner(provider: ContractProvider): Promise<Address> {
-        let res = await this.getDappData(provider);
-        return res.ownerAddress;
+        let res = (await provider.get('get_dapp_data', [])).stack;
+        return res.readAddress();
     }
     
     async getNextCollectionIndex(provider: ContractProvider): Promise<number> {
-        let res = await this.getDappData(provider);
-        return res.nextCollectionIndex;
+        let res = (await provider.get('get_dapp_data', [])).stack;
+        res.skip(1);
+        return res.readNumber();
     }
     
     async getStateBalance(provider: ContractProvider): Promise<bigint> {

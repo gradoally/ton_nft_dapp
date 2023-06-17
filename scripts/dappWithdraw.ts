@@ -2,9 +2,6 @@ import { NftDapp } from '../wrappers/NftDapp';
 import { NetworkProvider } from '@ton-community/blueprint';
 import { Address, toNano } from 'ton-core';
 import { sleep } from '@ton-community/blueprint/dist/utils';
-import { createKeys } from './helpers/keys';
-import { Opcodes } from '../wrappers/utils/opCodes';
-import { sign } from 'ton-crypto';
 
 export async function run(provider: NetworkProvider, args: string[]) {
     const ui = provider.ui();
@@ -15,17 +12,10 @@ export async function run(provider: NetworkProvider, args: string[]) {
 
     const balanceBefore = await nftDapp.getStateBalance();
 
-    const seqno = await nftDapp.getSeqno();
-
-    const keypair = await createKeys();
-
-    await nftDapp.sendWithdrawMsg({
-        seqno: seqno,
-        signFunc: (buf) => sign(buf, keypair.secretKey),
-        opCode: Opcodes.withdrawFunds,
-        amount: toNano('0.5'),
-        value: toNano('0.05'),
-    })
+    await nftDapp.sendWithdrawMsg(provider.sender(), {
+        queryId: Date.now(),
+        withdrawAmount: toNano('0.05')
+    });
 
     let balanceAfter = await nftDapp.getStateBalance();
     let attempt = 1;

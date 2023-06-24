@@ -36,12 +36,12 @@
     .end_cell());
 }
 
-cell calculate_nft_item_state_init(int item_index, cell nft_item_code) {
+cell calculate_nft_item_state_init(int item_index, cell nft_item_code) inline {
   cell data = begin_cell().store_uint(item_index, 64).store_slice(my_address()).end_cell();
   return begin_cell().store_uint(0, 2).store_dict(nft_item_code).store_dict(data).store_uint(0, 1).end_cell();
 }
 
-slice calculate_nft_item_address(int wc, cell state_init) {
+slice calculate_nft_item_address(int wc, cell state_init) inline {
   return begin_cell().store_uint(4, 3)
                      .store_int(wc, 8)
                      .store_uint(cell_hash(state_init), 256)
@@ -49,7 +49,7 @@ slice calculate_nft_item_address(int wc, cell state_init) {
                      .begin_parse();
 }
 
-() deploy_nft_item(int item_index, cell nft_item_code, int amount, cell nft_content) impure {
+() deploy_nft_item(int item_index, cell nft_item_code, int amount, cell nft_content) impure inline {
   cell state_init = calculate_nft_item_state_init(item_index, nft_item_code);
   slice nft_address = calculate_nft_item_address(workchain, state_init);
   var msg = begin_cell()
@@ -138,9 +138,7 @@ slice calculate_nft_item_address(int wc, cell state_init) {
 
           counter += 1;
 
-          if (counter >= 250) { ;; Limit due to limits of action list size
-            throw(399);
-          }
+          throw_unless(399, counter < 250);
 
           throw_unless(403 + counter, item_index <= next_item_index);
 

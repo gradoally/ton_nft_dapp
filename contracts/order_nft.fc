@@ -12,6 +12,7 @@
 
 
 int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
+int send_message(cell msg, int mode) asm "SENDMSG";
 ;;
 ;;  Storage
 ;;
@@ -22,7 +23,7 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
 ;;  MsgAddressInt editor_address
 
 
-(int, int, slice, slice, cell, slice) load_data() inline_ref {
+(int, int, slice, slice, cell, slice) load_data() inline {
     slice ds = get_data().begin_parse();
     var (index, collection_address) = (ds~load_uint(64), ds~load_msg_addr());
     if (ds.slice_bits() > 0) {
@@ -32,7 +33,7 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
     }
 }
 
-() store_data(int index, slice collection_address, slice owner_address, cell content, slice editor_address) impure {
+() store_data(int index, slice collection_address, slice owner_address, cell content, slice editor_address) impure inline {
     set_data(
         begin_cell()
             .store_uint(index, 64)
@@ -62,7 +63,7 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
 }
 
 () transfer_ownership(int my_balance, int index, slice collection_address, slice owner_address, 
-                            slice editor_address, cell content, slice sender_address, int query_id, slice in_msg_body, int fwd_fees) impure inline {
+                            slice editor_address, cell content, slice sender_address, int query_id, slice in_msg_body) impure inline {
 
     throw_unless(401, equal_slices(sender_address, owner_address));
 
@@ -71,6 +72,17 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
     slice response_destination = in_msg_body~load_msg_addr();
     in_msg_body~load_int(1); ;; this nft don't use custom_payload
     int forward_amount = in_msg_body~load_coins();
+
+    var msg = begin_cell()
+        .store_uint(flag::regular(), 6)
+        .store_slice(new_owner_address)
+        .store_coins(forward_amount)
+        .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+        .store_uint(op::ownership_assigned, 32)
+        .store_uint(query_id, 64)
+        .store_builder(begin_cell().store_slice(owner_address).store_slice(in_msg_body));
+
+    int fwd_fees = send_message(msg.end_cell(), 1 + 1024);
 
     int rest_amount = my_balance - min_tons_for_storage();
     if (forward_amount) {
@@ -203,7 +215,7 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
 
     if (op == op::transfer) {
 
-        transfer_ownership(my_balance, index, collection_address, owner_address, editor_address, content, sender_address, query_id, in_msg_body, fwd_fee);
+        transfer_ownership(my_balance, index, collection_address, owner_address, editor_address, content, sender_address, query_id, in_msg_body);
 
         return ();
     }

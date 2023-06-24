@@ -1,7 +1,5 @@
 ;; Storage
-;;
-;; int32 seqno
-;; int256 public_key
+
 ;; slice dapp_owner
 ;; int64 next_collection_index
 ;; cell collections_dict
@@ -15,7 +13,7 @@
 #include "utils/constants.fc";
 #include "utils/params.fc";
 
-(slice, int, cell) load_data() inline_ref {
+(slice, int, cell) load_data() inline {
 
     slice cs = get_data().begin_parse();
 
@@ -36,7 +34,7 @@
     );
 }
 
-slice calculate_collection_address(cell state_init) {
+slice calculate_collection_address(cell state_init) inline {
   return begin_cell().store_uint(4, 3)
                      .store_int(workchain, 8)
                      .store_uint(cell_hash(state_init), 256)
@@ -45,7 +43,7 @@ slice calculate_collection_address(cell state_init) {
 }
 
 
-() change_owner(slice new_owner_addr) impure {
+() change_owner(slice new_owner_addr) impure inline {
 
   (slice dapp_owner, int next_collection_index, cell collections_dict) = load_data();
 
@@ -54,7 +52,7 @@ slice calculate_collection_address(cell state_init) {
   save_data(new_owner_addr, next_collection_index, collections_dict);
 }
 
-() withdraw_funds(int my_balance, int withdraw_amount) impure {
+() withdraw_funds(int my_balance, int withdraw_amount) impure inline {
 
   throw_unless(407, my_balance + MIN_TONS_FOR_STORAGE > withdraw_amount);
 
@@ -64,7 +62,7 @@ slice calculate_collection_address(cell state_init) {
 }
 
 
-() edit_code(cell new_code) impure {
+() edit_code(cell new_code) impure inline {
 
   set_code(new_code);
 
@@ -74,7 +72,7 @@ slice calculate_collection_address(cell state_init) {
   throw(0);
 }
 
-(slice) return_collection_addr_by_id (int collection_id) inline_ref {
+(slice) return_collection_addr_by_id (int collection_id) inline {
 
   (_, _, cell collections_dict) = load_data();
 
@@ -86,7 +84,7 @@ slice calculate_collection_address(cell state_init) {
 
 }
 
-() deploy_collection (cell collection_code, cell collection_data) impure {
+() deploy_collection (cell collection_code, cell collection_data) impure inline {
 
   (slice dapp_owner, int next_collection_index, cell collections_dict) = load_data();
 
@@ -104,7 +102,7 @@ slice calculate_collection_address(cell state_init) {
 
 }
 
-() deploy_item (int collection_id, int query_id, int item_index, int amount, cell nft_content) impure {
+() deploy_item (int collection_id, int query_id, int item_index, int amount, cell nft_content) impure inline {
   
   slice collection_address = return_collection_addr_by_id(collection_id);
 
@@ -122,7 +120,7 @@ slice calculate_collection_address(cell state_init) {
 
 }
 
-() batch_nft_deploy (int collection_id, int query_id, cell deploy_list) impure {
+() batch_nft_deploy (int collection_id, int query_id, cell deploy_list) impure inline {
 
   slice collection_address = return_collection_addr_by_id(collection_id);
 
@@ -138,7 +136,7 @@ slice calculate_collection_address(cell state_init) {
 
 }
 
-() edit_collection_content (int collection_id, int query_id, cell new_content, cell royalty_params) impure {
+() edit_collection_content (int collection_id, int query_id, cell new_content, cell royalty_params) impure inline {
 
   slice collection_address = return_collection_addr_by_id(collection_id);
 
@@ -155,7 +153,7 @@ slice calculate_collection_address(cell state_init) {
 
 }
 
-() change_collection_owner (int collection_id, int query_id, slice new_owner_addr) impure {
+() change_collection_owner (int collection_id, int query_id, slice new_owner_addr) impure inline {
 
   slice collection_address = return_collection_addr_by_id(collection_id);
 
@@ -171,7 +169,7 @@ slice calculate_collection_address(cell state_init) {
 
 }
 
-() edit_item_content (slice item_address, int query_id, cell content) impure {
+() edit_item_content (slice item_address, int query_id, cell content) impure inline {
 
   slice in_msg_body = begin_cell()
                     .store_uint(op::edit_content, 32)
@@ -185,7 +183,7 @@ slice calculate_collection_address(cell state_init) {
 
 }
 
-() destroy_sbt_item (slice item_address, int query_id) impure {
+() destroy_sbt_item (slice item_address, int query_id) impure inline {
 
   slice in_msg_body = begin_cell()
                     .store_uint(op::destroy, 32)
@@ -198,7 +196,7 @@ slice calculate_collection_address(cell state_init) {
 
 }
 
-() revoke_sbt_item (slice item_address, int query_id) impure {
+() revoke_sbt_item (slice item_address, int query_id) impure inline {
 
   slice in_msg_body = begin_cell()
                   .store_uint(op::revoke, 32)
@@ -211,7 +209,7 @@ slice calculate_collection_address(cell state_init) {
 
 }
 
-() transfer_item (slice item_address, int query_id, slice new_owner_address, slice resp_address, int fwd_amount) impure {
+() transfer_item (slice item_address, int query_id, slice new_owner_address, slice resp_address, int fwd_amount) impure inline {
 
   slice in_msg_body = begin_cell()
                   .store_uint(op::transfer, 32)
@@ -277,9 +275,7 @@ slice calculate_collection_address(cell state_init) {
 
     if (op == op::deploy_nft_item) {
 
-      int collection_id = in_msg_body~load_uint(64);
-
-      deploy_item(collection_id, query_id, in_msg_body~load_uint(64), MIN_DEPLOY_AMOUNT, in_msg_body~load_ref());
+      deploy_item(in_msg_body~load_uint(64), query_id, in_msg_body~load_uint(64), MIN_DEPLOY_AMOUNT, in_msg_body~load_ref());
 
       return ();
 
@@ -287,9 +283,7 @@ slice calculate_collection_address(cell state_init) {
 
     if (op == op::batch_nft_deploy) {
 
-      int collection_id = in_msg_body~load_uint(64);
-
-      batch_nft_deploy(collection_id, query_id, in_msg_body~load_ref());
+      batch_nft_deploy(in_msg_body~load_uint(64), query_id, in_msg_body~load_ref());
 
       return ();
 
@@ -297,9 +291,7 @@ slice calculate_collection_address(cell state_init) {
 
     if (op == op::change_collection_owner) {
 
-      int collection_id = in_msg_body~load_uint(64);
-
-      change_collection_owner(collection_id, query_id, in_msg_body~load_msg_addr());
+      change_collection_owner(in_msg_body~load_uint(64), query_id, in_msg_body~load_msg_addr());
 
       return ();
 
@@ -307,9 +299,7 @@ slice calculate_collection_address(cell state_init) {
 
     if (op == op::edit_collection_content) {
 
-      int collection_id = in_msg_body~load_uint(64);
-
-      edit_collection_content(collection_id, query_id, in_msg_body~load_ref(), in_msg_body~load_ref());
+      edit_collection_content(in_msg_body~load_uint(64), query_id, in_msg_body~load_ref(), in_msg_body~load_ref());
 
       return ();
 
@@ -360,7 +350,6 @@ slice calculate_collection_address(cell state_init) {
     }
 
     throw(0xffffff);
-
 }
 
 ;; Getters

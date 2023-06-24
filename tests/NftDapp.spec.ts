@@ -1,4 +1,4 @@
-import { Blockchain, SandboxContract, TreasuryContract } from '@ton-community/sandbox';
+import { Blockchain, SandboxContract, TreasuryContract, printTransactionFees } from '@ton-community/sandbox';
 import { Cell, Dictionary, toNano } from 'ton-core';
 import { NftDapp } from '../wrappers/NftDapp';
 import '@ton-community/test-utils';
@@ -68,6 +68,34 @@ describe('NftDapp', () => {
        const nextCollectionIndex = await nftDapp.getNextCollectionIndex();
         
        expect(nextCollectionIndex).toBeGreaterThan(0);
+
+       printTransactionFees(mintCollectionResult.transactions);
+
+    });
+
+    it('should upgrade code', async () => {
+
+        const res = await nftDapp.sendUpdateDappCodeMsg(owner.getSender(), {
+            newCode: new Cell(),
+            queryId: 0
+        });
+
+        expect(res.transactions).toHaveTransaction({
+            from: owner.address,
+            to: nftDapp.address,
+            success: true,
+        });
+
+        expect(res.transactions)
+
+        const state = (await blockchain.getContract(nftDapp.address)).accountState;
+
+        if (state?.type !== 'active') throw new Error('state is not active');
+
+        expect(state.state.code?.equals(new Cell())).toBeTruthy();
+
+        printTransactionFees(res.transactions);
+    
     });
 
 });

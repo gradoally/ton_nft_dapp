@@ -23,6 +23,11 @@
     "dependencies": {
         "@aws-crypto/sha256-js": "^4.0.0",
         "ton-emulator": "^2.1.1",
-        "tonweb": "^0.0.60"
+        "tonweb": "^0.0.60",
+        "@ton-community/sandbox": "^0.12.0-tvmbeta.1"
+    },
+    "resolutions": {
+        "@ton-community/func-js-bin": "0.4.5-tvmbeta.1",
+        "@ton-community/func-js": "0.6.3-tvmbeta.1"
     }
 }

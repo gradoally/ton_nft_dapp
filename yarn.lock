@@ -748,17 +748,17 @@
     ton-x "^2.1.0"
     ts-node "^10.9.1"
 
-"@ton-community/func-js-bin@0.4.1":
-  version "0.4.1"
-  resolved "https://registry.npmjs.org/@ton-community/func-js-bin/-/func-js-bin-0.4.1.tgz"
-  integrity sha512-wPqfDOPWudNLNgwQa4y8l/+de0lDtfICpQRa16/HRlY1oR5qScaLOsoF3QsXUbDO+Ps/BiXfVRa8Z8kiuKhF/w==
+"@ton-community/func-js-bin@0.4.5-tvmbeta.1":
+  version "0.4.5-tvmbeta.1"
+  resolved "https://registry.yarnpkg.com/@ton-community/func-js-bin/-/func-js-bin-0.4.5-tvmbeta.1.tgz#0d6785ebf9cf1a689db4568f663e41586ed3e0c8"
+  integrity sha512-RjiF47XnOwZ26/HDX5M1KPoH9Xd8FwRqEYtj6FXMYOS2lUlYdZOnBYTMuwRkfNl2hRSrg15NkErl5aRR8YTMzg==
 
-"@ton-community/func-js@^0.4.0":
-  version "0.4.1"
-  resolved "https://registry.npmjs.org/@ton-community/func-js/-/func-js-0.4.1.tgz"
-  integrity sha512-yXR+MQxkvFSz860QW593M1hptlFrwdgZnVShaU5WYPv9RJlr/mOmNzs95mlEMgiFmMreQqPLgRY6M9lBGdeepw==
+"@ton-community/func-js@0.6.3-tvmbeta.1", "@ton-community/func-js@^0.4.0":
+  version "0.6.3-tvmbeta.1"
+  resolved "https://registry.yarnpkg.com/@ton-community/func-js/-/func-js-0.6.3-tvmbeta.1.tgz#90ec7987f341d1a56862a72b6b0415eb42c04bbb"
+  integrity sha512-6/Iz3bbDQFMzyFUc0tOLukY2l+ItXZJt7q5Jcs8edHlBsYhffHUIgXinPE7E70Bb0E3Cbs3p+8RxPSLLrUDGhQ==
   dependencies:
-    "@ton-community/func-js-bin" "0.4.1"
+    "@ton-community/func-js-bin" "0.4.5-tvmbeta.1"
     arg "^5.0.2"
 
 "@ton-community/sandbox@^0.10.0":

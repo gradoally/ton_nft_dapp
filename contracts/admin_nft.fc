@@ -19,7 +19,6 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
 ;;  MsgAddressInt owner_address
 ;;  cell content
 ;;  MsgAddressInt authority_address
-;;  MsgAddressInt editor_address
 ;;  uint64 revoked_at
 
 (int, int, slice, slice, cell, slice, int) load_data() inline {
@@ -32,7 +31,7 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
     }
 }
 
-() store_data(int index, slice collection_address, slice owner_address, cell content, slice authority_address, int revoked_at) impure {
+() store_data(int index, slice collection_address, slice owner_address, cell content, slice authority_address, int revoked_at) impure inline {
     set_data(
         begin_cell()
             .store_uint(index, 64)
@@ -71,13 +70,6 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
     int flags = cs~load_uint(4);
 
     slice sender_address = cs~load_msg_addr();
-
-    cs~load_msg_addr(); 
-    cs~load_coins(); 
-    cs~skip_bits(1); 
-    cs~load_coins();
-    
-    int fwd_fee = muldiv(cs~load_coins(), 3, 2);
     
     (int init?, int index, slice collection_address, slice owner_address, cell content, slice authority_address, int revoked_at) = load_data();
 
@@ -87,8 +79,6 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
         slice owner_address = in_msg_body~load_msg_addr();
        ;; cell content_dict = in_msg_body~load_dict();
         slice authority_address = in_msg_body~load_msg_addr();
-
-      ;;  cell content = begin_cell().store_uint(0, 8).store_dict(content_dict).end_cell();
 
         cell content = begin_cell().store_uint(0, 8).store_dict(new_dict()).end_cell();
 

@@ -15,7 +15,7 @@ export async function run(provider: NetworkProvider, args: string[]) {
             itemAuthorityAddress: address,
           // itemContent: '1',
             queryId: Date.now(),
-            collectionId: 16,
+            collectionId: 0,
     });
 
     ui.write("Item successfully deployed!");

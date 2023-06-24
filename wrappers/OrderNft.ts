@@ -4,10 +4,8 @@ export type OrderNftConfig = {
     index: number;
     collectionAddress: Address;
     ownerAddress: Address;
-    content: Dictionary<number, Cell>;
-    authorityAddress: Address;
+    content: Cell;
     editorAddress: Address;
-    revokedAt: number;
 };
 
 export function orderNftConfigToCell(config: OrderNftConfig): Cell {
@@ -15,10 +13,8 @@ export function orderNftConfigToCell(config: OrderNftConfig): Cell {
             .storeUint(config.index, 64)
             .storeAddress(config.collectionAddress)
             .storeAddress(config.ownerAddress)
-            .storeDict(config.content)
-            .storeAddress(config.authorityAddress)
+            .storeRef(config.content)
             .storeAddress(config.editorAddress)
-            .storeUint(config.revokedAt, 64)
         .endCell();
 }
 
@@ -40,6 +36,30 @@ export class OrderNft implements Contract {
             value,
             sendMode: SendMode.PAY_GAS_SEPARATLY,
             body: beginCell().endCell(),
+        });
+    }
+
+    async sendTransfer(provider: ContractProvider, via: Sender,
+        opts: {
+            queryId: number;
+            value: bigint;
+            newOwner: Address;
+            responseAddress?: Address;
+            fwdAmount?: bigint;
+        }
+    ) {
+        await provider.internal(via, {
+            value: opts.value,
+            sendMode: SendMode.PAY_GAS_SEPARATLY,
+            body: beginCell()
+                .storeUint(0x5fcc3d14, 32)
+                .storeUint(opts.queryId, 64)
+                .storeAddress(opts.newOwner)
+                .storeAddress(opts.responseAddress || null)
+                .storeBit(false) // no custom payload
+                .storeCoins(opts.fwdAmount || 0)
+                .storeBit(false) // no forward payload
+            .endCell(),
         });
     }
 }

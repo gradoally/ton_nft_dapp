@@ -22,7 +22,7 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
 ;;  MsgAddressInt editor_address
 ;;  uint64 revoked_at
 
-(int, int, slice, slice, cell, slice, slice, int) load_data() inline_ref {
+(int, int, slice, slice, cell, slice, slice, int) load_data() inline {
     slice ds = get_data().begin_parse();
     var (index, collection_address) = (ds~load_uint(64), ds~load_msg_addr());
     if (ds.slice_bits() > 0) {
@@ -32,7 +32,7 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
     }
 }
 
-() store_data(int index, slice collection_address, slice owner_address, cell content, slice authority_address, slice editor_address, int revoked_at) impure {
+() store_data(int index, slice collection_address, slice owner_address, cell content, slice authority_address, slice editor_address, int revoked_at) impure inline {
     set_data(
         begin_cell()
             .store_uint(index, 64)
@@ -63,7 +63,7 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
     send_raw_message(msg.end_cell(), send_mode);
 }
 
-() transfer_editorship(int my_balance, int index, slice collection_address, slice owner_address, cell content, slice editor_address, slice sender_address, int query_id, slice in_msg_body, int fwd_fees) impure inline {
+() transfer_editorship(int my_balance, int index, slice collection_address, slice owner_address, cell content, slice editor_address, slice sender_address, int query_id, slice in_msg_body) impure inline {
     throw_unless(401, equal_slices(sender_address, editor_address));
 
     (_, _, _, _, _, slice authority_address, _, int revoked_at) = load_data();
@@ -105,13 +105,6 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
     int flags = cs~load_uint(4);
 
     slice sender_address = cs~load_msg_addr();
-
-    cs~load_msg_addr(); 
-    cs~load_coins(); 
-    cs~skip_bits(1); 
-    cs~load_coins();
-    
-    int fwd_fee = muldiv(cs~load_coins(), 3, 2);
 
     (int init?, int index, slice collection_address, slice owner_address, cell content, slice authority_address, slice editor_address, int revoked_at) = load_data();
 

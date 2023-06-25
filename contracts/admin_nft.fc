@@ -40,7 +40,7 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
             .store_ref(content)
             .store_slice(authority_address)
             .store_uint(revoked_at, 64)
-            .end_cell()
+        .end_cell()
     );
 }
 

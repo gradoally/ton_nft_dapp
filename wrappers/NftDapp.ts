@@ -83,6 +83,7 @@ export class NftDapp implements Contract {
             queryId: number;
             itemOwnerAddress: Address;
             itemAuthorityAddress?: Address;
+            itemEditorAddress?: Address;
         }
     ) {
 
@@ -92,6 +93,7 @@ export class NftDapp implements Contract {
 
         nftItemMessage.storeAddress(opts.itemOwnerAddress);
         nftItemMessage.storeAddress(opts.itemAuthorityAddress);  // This line is for SBT
+        nftItemMessage.storeAddress(opts.itemEditorAddress);
       //  nftItemMessage.storeDict(nftContent);
 
         await provider.internal(via, {

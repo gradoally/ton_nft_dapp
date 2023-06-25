@@ -12,6 +12,7 @@
 
 
 int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
+
 int send_message(cell msg, int mode) asm "SENDMSG";
 ;;
 ;;  Storage
@@ -41,13 +42,13 @@ int send_message(cell msg, int mode) asm "SENDMSG";
             .store_slice(owner_address)
             .store_ref(content)
             .store_slice(editor_address)
-            .end_cell()
+          .end_cell()
     );
 }
 
-() send_msg(int flag, slice to_address, int amount, int op, int query_id, builder payload, int send_mode) impure inline {
+builder create_msg(int flag, slice to_address, int amount, int op, int query_id, builder payload) inline {
 
-    var msg = begin_cell()
+    builder msg = begin_cell()
         .store_uint(flag, 6)
         .store_slice(to_address)
         .store_coins(amount)
@@ -59,7 +60,7 @@ int send_message(cell msg, int mode) asm "SENDMSG";
         msg = msg.store_builder(payload);
     }
 
-    send_raw_message(msg.end_cell(), send_mode);
+    return msg;
 }
 
 () transfer_ownership(int my_balance, int index, slice collection_address, slice owner_address, 
@@ -73,42 +74,40 @@ int send_message(cell msg, int mode) asm "SENDMSG";
     in_msg_body~load_int(1); ;; this nft don't use custom_payload
     int forward_amount = in_msg_body~load_coins();
 
-    var msg = begin_cell()
-        .store_uint(flag::regular(), 6)
-        .store_slice(new_owner_address)
-        .store_coins(forward_amount)
-        .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
-        .store_uint(op::ownership_assigned, 32)
-        .store_uint(query_id, 64)
-        .store_builder(begin_cell().store_slice(owner_address).store_slice(in_msg_body));
-
-    int fwd_fees = send_message(msg.end_cell(), 1 + 1024);
-
+    builder owner_msg = create_msg(flag::regular(), new_owner_address, forward_amount, op::ownership_assigned, query_id, 
+                                                                begin_cell().store_slice(owner_address).store_slice(in_msg_body));
     int rest_amount = my_balance - min_tons_for_storage();
+
     if (forward_amount) {
-      rest_amount -= (forward_amount + fwd_fees);
+      int fwd_fees_owner = send_message(owner_msg.end_cell(), PAID_EXTERNALLY + 1024);
+      rest_amount -= (forward_amount + fwd_fees_owner);
     }
+
     int need_response = response_destination.preload_uint(2) != 0; ;; if NOT addr_none: 00
+
+    builder resp_msg = create_msg(flag::regular(), response_destination, rest_amount, op::excesses, query_id, null());
+
     if (need_response) {
-      rest_amount -= fwd_fees;
+      int fwd_fees_resp = send_message(resp_msg.end_cell(), PAID_EXTERNALLY + 1024);
+      rest_amount -= fwd_fees_resp;
     }
 
     throw_unless(402, rest_amount >= 0); ;; base nft spends fixed amount of gas, will not check for response
 
     if (forward_amount) {
-      send_msg(flag::regular(), new_owner_address, forward_amount, op::ownership_assigned, 
-                    query_id, begin_cell().store_slice(owner_address).store_slice(in_msg_body), PAID_EXTERNALLY);  ;; paying fees, revert on errors
+      send_raw_message(owner_msg.end_cell(), PAID_EXTERNALLY);
     }
+
     if (need_response) {
       force_chain(response_destination);
-      send_msg(flag::regular(), response_destination, rest_amount, op::excesses, query_id, null(), PAID_EXTERNALLY); ;; paying fees, revert on errors
+      send_raw_message(resp_msg.end_cell(), PAID_EXTERNALLY); ;; paying fees, revert on errors
     }
 
     store_data(index, collection_address, new_owner_address, content, editor_address);
 }
 
 () transfer_editorship(int my_balance, int index, slice collection_address, slice owner_address, 
-                            slice editor_address, cell content, slice sender_address, int query_id, slice in_msg_body, int fwd_fees) impure inline {
+                            slice editor_address, cell content, slice sender_address, int query_id, slice in_msg_body) impure inline {
 
     throw_unless(401, equal_slices(sender_address, editor_address));
 
@@ -118,24 +117,31 @@ int send_message(cell msg, int mode) asm "SENDMSG";
     in_msg_body~load_int(1); 
     int forward_amount = in_msg_body~load_coins();
 
+    builder editor_msg = create_msg(flag::regular(), new_editor_address, forward_amount, op::editorship_assigned, query_id, 
+                                                                  begin_cell().store_slice(editor_address).store_slice(in_msg_body));
     int rest_amount = my_balance - min_tons_for_storage();
+
     if (forward_amount) {
-      rest_amount -= (forward_amount + fwd_fees);
+      int fwd_fees_editor = send_message(editor_msg.end_cell(), PAID_EXTERNALLY + 1024);
+      rest_amount -= (forward_amount + fwd_fees_editor);
     }
+
     int need_response = response_destination.preload_uint(2) != 0; 
+    builder resp_msg = create_msg(flag::regular(), response_destination, rest_amount, op::excesses, query_id, null());
+
     if (need_response) {
-      rest_amount -= fwd_fees;
+      int fwd_fees_resp = send_message(resp_msg.end_cell(), PAID_EXTERNALLY + 1024);
+      rest_amount -= fwd_fees_resp;
     }
 
     throw_unless(402, rest_amount >= 0); 
 
     if (forward_amount) {
-      send_msg(flag::regular(), new_editor_address, forward_amount, op::editorship_assigned, 
-                    query_id, begin_cell().store_slice(editor_address).store_slice(in_msg_body), PAID_EXTERNALLY);  ;; paying fees, revert on errors
+      send_raw_message(editor_msg.end_cell(), PAID_EXTERNALLY);
     }
     if (need_response) {
       force_chain(response_destination);
-      send_msg(flag::regular(), response_destination, rest_amount, op::excesses, query_id, null(), PAID_EXTERNALLY); 
+      send_raw_message(resp_msg.end_cell(), PAID_EXTERNALLY); ;; paying fees, revert on errors
     }
 
     store_data(index, collection_address, owner_address, content, new_editor_address);
@@ -149,14 +155,11 @@ int send_message(cell msg, int mode) asm "SENDMSG";
     slice cs = in_msg_full.begin_parse();
     int flags = cs~load_uint(4);
 
-    slice sender_address = cs~load_msg_addr();
+    if (flags & 1) { ;; ignore all bounced messages
+        return ();
+    }
 
-    cs~load_msg_addr(); 
-    cs~load_coins(); 
-    cs~skip_bits(1); 
-    cs~load_coins();
-    
-    int fwd_fee = muldiv(cs~load_coins(), 3, 2);
+    slice sender_address = cs~load_msg_addr();
 
     (int init?, int index, slice collection_address, slice owner_address, cell content, slice editor_address) = load_data();
 
@@ -173,14 +176,17 @@ int send_message(cell msg, int mode) asm "SENDMSG";
     int query_id = in_msg_body~load_uint(64);
    
     if (op == op::get_static_data) {
-        var msg = begin_cell().store_uint(index, 256).store_slice(collection_address);
 
-        send_msg(flag::regular(), sender_address, ZERO_AMOUNT, op::report_static_data, query_id, msg, CARRY_REMAINING_GAS);
+        builder msg = create_msg(flag::regular(), sender_address, 0, op::report_static_data, query_id, 
+                                                      begin_cell().store_uint(index, 256).store_slice(collection_address));
+
+        send_raw_message(msg.end_cell(), CARRY_REMAINING_GAS);
+
         return ();
     }
 
     if (op == op::transfer_editorship) {
-        transfer_editorship(my_balance, index, collection_address, owner_address, editor_address, content, sender_address, query_id, in_msg_body, fwd_fee);
+        transfer_editorship(my_balance, index, collection_address, owner_address, editor_address, content, sender_address, query_id, in_msg_body);
         return ();
     }
 

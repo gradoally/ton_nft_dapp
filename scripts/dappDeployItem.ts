@@ -13,7 +13,7 @@ export async function run(provider: NetworkProvider, args: string[]) {
             itemIndex: 0,
             itemOwnerAddress: address,
             itemAuthorityAddress: address,
-          // itemContent: '1',
+            itemEditorAddress: address,
             queryId: Date.now(),
             collectionId: 0,
     });

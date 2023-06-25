@@ -15,7 +15,7 @@ export async function run(provider: NetworkProvider, args: string[]) {
             queryId: Date.now(),
             newOwner: randomAddress(),
             responseAddress: provider.sender().address as Address,
-            itemAddress: Address.parse("EQBfXWiU8wvHqNUZVNo3c-2g1VzNvuGDx-uM9-vrXEkl0G0S")
+            itemAddress: Address.parse("EQD6En81KlAjcD2uOJugk5tKXL1E2a-kHg-ykDabmlcVvl02")
         });
 
     ui.write('Transfered successfully!');

@@ -63,6 +63,64 @@ builder create_msg(int flag, slice to_address, int amount, int op, int query_id,
     return msg;
 }
 
+(int) send_msg_return_fee(int flag, slice to_address, int amount, int op, int query_id, builder payload, int send_mode) impure inline {
+
+    var msg = begin_cell()
+        .store_uint(flag, 6)
+        .store_slice(to_address)
+        .store_coins(amount)
+        .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+        .store_uint(op, 32)
+        .store_uint(query_id, 64);
+
+    if (~ builder_null?(payload)) {
+        msg = msg.store_builder(payload);
+    }
+
+    return send_message(msg.end_cell(), send_mode);
+}
+
+() send_msg_with_checks_and_fee_precalc(
+  int my_balance,
+  int need_response,
+  slice response_destination,
+  int forward_amount,
+  slice to_address,
+  int op, 
+  int query_id, 
+  builder payload) impure inline {
+
+    try {
+
+      int fwd_fees = 0;
+
+      if (forward_amount) {
+        fwd_fees = send_msg_return_fee(flag::regular(), to_address, forward_amount, op, query_id, payload, PAID_EXTERNALLY);  ;; paying fees, revert on errors
+      }
+
+      int rest_amount = my_balance - min_tons_for_storage();
+
+      if (need_response) {
+        force_chain(response_destination);
+        fwd_fees = send_msg_return_fee(flag::regular(), response_destination, rest_amount, op::excesses, query_id, null(), PAID_EXTERNALLY);  ;; paying fees, revert on errors
+      }
+
+      if (forward_amount) {
+        rest_amount -= (forward_amount + fwd_fees);
+      }
+
+      if (need_response) {
+        rest_amount -= fwd_fees;
+      }
+
+      throw_unless(402, rest_amount >= 0); ;; base nft spends fixed amount of gas, will not check for response
+
+    } catch (_, _) {
+
+    }
+
+}
+
 () transfer_ownership(int my_balance, int index, slice collection_address, slice owner_address, 
                             slice editor_address, cell content, slice sender_address, int query_id, slice in_msg_body) impure inline {
 
@@ -70,38 +128,26 @@ builder create_msg(int flag, slice to_address, int amount, int op, int query_id,
 
     slice new_owner_address = in_msg_body~load_msg_addr();
     force_chain(new_owner_address);
+
     slice response_destination = in_msg_body~load_msg_addr();
+
     in_msg_body~load_int(1); ;; this nft don't use custom_payload
+
     int forward_amount = in_msg_body~load_coins();
 
-    builder owner_msg = create_msg(flag::regular(), new_owner_address, forward_amount, op::ownership_assigned, query_id, 
-                                                                begin_cell().store_slice(owner_address).store_slice(in_msg_body));
-    int rest_amount = my_balance - min_tons_for_storage();
+    var msg = 
+      begin_cell()
+        .store_uint(flag::regular(), 6)
+        .store_slice(new_owner_address)
+        .store_coins(forward_amount)
+        .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+        .store_uint(op::ownership_assigned, 32)
+        .store_uint(query_id, 64)
+        .store_builder(begin_cell().store_slice(owner_address).store_slice(in_msg_body));
 
-    if (forward_amount) {
-      int fwd_fees_owner = send_message(owner_msg.end_cell(), PAID_EXTERNALLY + 1024);
-      rest_amount -= (forward_amount + fwd_fees_owner);
-    }
+    int need_response = response_destination.preload_uint(2) != 0;
 
-    int need_response = response_destination.preload_uint(2) != 0; ;; if NOT addr_none: 00
-
-    builder resp_msg = create_msg(flag::regular(), response_destination, rest_amount, op::excesses, query_id, null());
-
-    if (need_response) {
-      int fwd_fees_resp = send_message(resp_msg.end_cell(), PAID_EXTERNALLY + 1024);
-      rest_amount -= fwd_fees_resp;
-    }
-
-    throw_unless(402, rest_amount >= 0); ;; base nft spends fixed amount of gas, will not check for response
-
-    if (forward_amount) {
-      send_raw_message(owner_msg.end_cell(), PAID_EXTERNALLY);
-    }
-
-    if (need_response) {
-      force_chain(response_destination);
-      send_raw_message(resp_msg.end_cell(), PAID_EXTERNALLY); ;; paying fees, revert on errors
-    }
+    send_msg_with_checks_and_fee_precalc(my_balance, need_response, response_destination, forward_amount, new_owner_address, op::ownership_assigned, query_id, msg);
 
     store_data(index, collection_address, new_owner_address, content, editor_address);
 }
@@ -113,36 +159,21 @@ builder create_msg(int flag, slice to_address, int amount, int op, int query_id,
 
     slice new_editor_address = in_msg_body~load_msg_addr();
     force_chain(new_editor_address);
+
     slice response_destination = in_msg_body~load_msg_addr();
+
     in_msg_body~load_int(1); 
+
     int forward_amount = in_msg_body~load_coins();
 
-    builder editor_msg = create_msg(flag::regular(), new_editor_address, forward_amount, op::editorship_assigned, query_id, 
-                                                                  begin_cell().store_slice(editor_address).store_slice(in_msg_body));
-    int rest_amount = my_balance - min_tons_for_storage();
+    int need_response = response_destination.preload_uint(2) != 0;
 
-    if (forward_amount) {
-      int fwd_fees_editor = send_message(editor_msg.end_cell(), PAID_EXTERNALLY + 1024);
-      rest_amount -= (forward_amount + fwd_fees_editor);
-    }
+    var msg = 
+      begin_cell()
+        .store_slice(editor_address)
+        .store_slice(in_msg_body);
 
-    int need_response = response_destination.preload_uint(2) != 0; 
-    builder resp_msg = create_msg(flag::regular(), response_destination, rest_amount, op::excesses, query_id, null());
-
-    if (need_response) {
-      int fwd_fees_resp = send_message(resp_msg.end_cell(), PAID_EXTERNALLY + 1024);
-      rest_amount -= fwd_fees_resp;
-    }
-
-    throw_unless(402, rest_amount >= 0); 
-
-    if (forward_amount) {
-      send_raw_message(editor_msg.end_cell(), PAID_EXTERNALLY);
-    }
-    if (need_response) {
-      force_chain(response_destination);
-      send_raw_message(resp_msg.end_cell(), PAID_EXTERNALLY); ;; paying fees, revert on errors
-    }
+    send_msg_with_checks_and_fee_precalc(my_balance, need_response, response_destination, forward_amount, new_editor_address, op::editorship_assigned, query_id, msg);
 
     store_data(index, collection_address, owner_address, content, new_editor_address);
 }

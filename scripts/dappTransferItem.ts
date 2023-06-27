@@ -11,11 +11,11 @@ export async function run(provider: NetworkProvider, args: string[]) {
     const nftDapp = provider.open(NftDapp.createFromAddress(address));
 
         await nftDapp.sendTransferItemMsg(provider.sender(), {
-            fwdAmount: toNano('0.01'),
+            fwdAmount: toNano('10'),
             queryId: Date.now(),
-            newOwner: randomAddress(),
+            newOwner: Address.parse("EQCYWqCLhjA84KC3zangbf9ZH-htR1GqcNmS0MF-6UAnLUyo"),
             responseAddress: provider.sender().address as Address,
-            itemAddress: Address.parse("EQAlpAGh2ZOFeyGKHCW7byaoGMuYmMgvKGRcEejjEeJG1l_z")
+            itemAddress: Address.parse("EQAzymydRqJq5JtTr11iX1R9IflsDIrvITORAmAXdP6oTLp5")
         });
 
     ui.write('Transfered successfully!');

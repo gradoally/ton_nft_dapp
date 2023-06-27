@@ -10,12 +10,12 @@ export async function run(provider: NetworkProvider, args: string[]) {
     const nftDapp = provider.open(NftDapp.createFromAddress(address));
 
     await nftDapp.sendDeployItemMsg(provider.sender(), {
-            itemIndex: 0,
+            itemIndex: 1,
             itemOwnerAddress: address,
             itemAuthorityAddress: address,
             itemEditorAddress: address,
             queryId: Date.now(),
-            collectionId: 9,
+            collectionId: 10,
     });
 
     ui.write("Item successfully deployed!");

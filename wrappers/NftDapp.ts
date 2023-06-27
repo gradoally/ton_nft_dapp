@@ -63,7 +63,7 @@ export class NftDapp implements Contract {
     ) {
 
         await provider.internal(via, {
-            value: toNano('0.1'),
+            value: toNano('0.6'),
             sendMode: SendMode.PAY_GAS_SEPARATLY,
             body: beginCell()
                 .storeUint(Opcodes.deployCollection, 32)

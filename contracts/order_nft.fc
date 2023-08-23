@@ -11,7 +11,6 @@
 #include "./utils/flags.fc";
 #include "./utils/op-codes.fc";
 
-
 int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
 
 int send_message(cell msg, int mode) asm "SENDMSG";
@@ -213,8 +212,8 @@ builder create_msg(int flag, slice to_address, int amount, int op, int query_id,
     if (~ init?) {
         throw_unless(405, equal_slices(collection_address, sender_address));
 
-        store_data(index, collection_address, in_msg_body~load_msg_addr(), 
-                begin_cell().store_uint(0, 8).store_dict(new_dict()).end_cell(), in_msg_body~load_msg_addr());  
+        store_data(index, collection_address, sender_address, 
+                begin_cell().store_uint(0, 8).store_dict(content).end_cell(), sender_address);  
 
         return ();
     }

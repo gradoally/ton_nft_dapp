@@ -4,6 +4,8 @@
 ;; int64 next_collection_index
 ;; cell collections_dict
 
+global int some_int;
+
 #pragma version >=0.4.0;
 #include "imports/stdlib.fc";
 #include "imports/messages.fc";
@@ -228,6 +230,8 @@ slice calculate_collection_address(cell state_init) inline {
 
 () recv_internal(int balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
 
+  int some_int = 68548544;
+
   slice cs = in_msg_full.begin_parse();
 
   int flags = cs~load_uint(4);
@@ -362,5 +366,4 @@ slice calculate_collection_address(cell state_init) inline {
     collections_dict
   );
 }
-
 

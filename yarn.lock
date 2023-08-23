@@ -761,10 +761,10 @@
     "@ton-community/func-js-bin" "0.4.5-tvmbeta.1"
     arg "^5.0.2"
 
-"@ton-community/sandbox@^0.10.0":
-  version "0.10.0"
-  resolved "https://registry.yarnpkg.com/@ton-community/sandbox/-/sandbox-0.10.0.tgz#804771e15eedff6af6cded9874cbb9a44aeca41c"
-  integrity sha512-OoyisFG1k3GbKB8Sernf5fB7XdKbLB5xZO/C1EgaUwpbMDInzlIOgdA7LEfVddLslenRLwjm9XVtxeVF+XWGJQ==
+"@ton-community/sandbox@^0.12.0-tvmbeta.1":
+  version "0.12.0-tvmbeta.1"
+  resolved "https://registry.yarnpkg.com/@ton-community/sandbox/-/sandbox-0.12.0-tvmbeta.1.tgz#eaf4f8b1bcd4e34289d47c13c20437a788380a34"
+  integrity sha512-kaiJZlxQdz8bw7QWNxRspHoX3AvioAFJe9cXcPsAqLS2H3z7FIPtTDNasm2POUhuvabZdFbEBL2YPd+yVaKoHg==
 
 "@ton-community/test-utils@^0.0.2":
   version "0.0.2"
@@ -772,6 +772,45 @@
   integrity sha512-cQikP/6nvgH7UhFMqncCY9Xrxup1iEoqzZ6u91Ji3c4Y3Yy4NAeH93FAZtM/E2QRSFM4nrNTWzHQzvbs2ntBsA==
   dependencies:
     node-inspect-extracted "^2.0.0"
+
+"@ton/core@^0.49.2":
+  version "0.49.2"
+  resolved "https://registry.yarnpkg.com/@ton/core/-/core-0.49.2.tgz#bb5f714f727cb98768d53bfb76b87133858e6bda"
+  integrity sha512-jzW7ZGNkkkv131uvgX/4JgHBdtEnanT8i1fnZ6NOL7lxXjlVIKTuAfr1J2wJQAGHn0wLrbceAHix3jKX+4F5CA==
+  dependencies:
+    symbol.inspect "1.0.1"
+
+"@ton/crypto-primitives@2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@ton/crypto-primitives/-/crypto-primitives-2.0.0.tgz#446256146d64fcec6e3f21d9f40b5148640329cc"
+  integrity sha512-wttiNClmGbI6Dfy/8oyNnsIV0b/qYkCJz4Gn4eP62lJZzMtVQ94Ko7nikDX1EfYHkLI1xpOitWpW+8ZuG6XtDg==
+  dependencies:
+    jssha "3.2.0"
+
+"@ton/crypto@^3.2.0":
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/@ton/crypto/-/crypto-3.2.0.tgz#8fcb36cc93eafd05249c847d1f4ad39cf2565e46"
+  integrity sha512-50RkwReEuV2FkxSZ8ht/x9+n0ZGtwRKGsJ0ay4I/HFhkYVG/awIIBQeH0W4j8d5lADdO5h01UtX8PJ8AjiejjA==
+  dependencies:
+    "@ton/crypto-primitives" "2.0.0"
+    jssha "3.2.0"
+    tweetnacl "1.0.3"
+
+"@ton/sandbox@^0.11.1":
+  version "0.11.1"
+  resolved "https://registry.yarnpkg.com/@ton/sandbox/-/sandbox-0.11.1.tgz#cd1fed88e8c857e3634251f9530fae69e9291afe"
+  integrity sha512-yoGpU8lgmHC/YuiPhKmp5inTSHzZtZXgvSNUCn4kC2L9VQFSN+ij+G73sgO9JwcGPtIx/hyy7I0J+IM/mbRTnA==
+
+"@ton/ton@^13.5.1":
+  version "13.5.1"
+  resolved "https://registry.yarnpkg.com/@ton/ton/-/ton-13.5.1.tgz#67b3bdb43ef125f5ea85095b0d8d4c9827c23e68"
+  integrity sha512-ffmlDqQG3K31tEIHwhKTdluaGvj1Cmb0QXOVG8AocojPiyJ1WnWh/uG19tk94oDGW8c6XRbkjQYUwhDK8ZlF5w==
+  dependencies:
+    axios "^0.25.0"
+    dataloader "^2.0.0"
+    symbol.inspect "1.0.1"
+    teslabot "^1.3.0"
+    zod "^3.21.4"
 
 "@tonconnect/protocol@^2.0.1":
   version "2.2.2"

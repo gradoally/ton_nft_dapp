@@ -7,12 +7,12 @@ export async function run(provider: NetworkProvider) {
         {
             ownerAddress: provider.sender().address as Address,
             nextCollectionIndex: 0,
-            collectionsDict: Dictionary.empty(Dictionary.Keys.Uint(256), Dictionary.Values.Address()),
+            collectionsDict: Dictionary.empty(Dictionary.Keys.Uint(64), Dictionary.Values.Address()),
         },
 
         await compile('NftDapp')
     );
 
-    await provider.deploy(nftDapp, toNano('1'));
+    await provider.deploy(nftDapp, toNano('0.05'));
 
 }

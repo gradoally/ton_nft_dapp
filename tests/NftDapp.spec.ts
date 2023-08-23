@@ -1,10 +1,11 @@
 import { Blockchain, SandboxContract, TreasuryContract, printTransactionFees } from '@ton-community/sandbox';
-import { Cell, Dictionary, toNano } from 'ton-core';
+import { Address, Cell, Dictionary, toNano } from 'ton-core';
 import { NftDapp } from '../wrappers/NftDapp';
 import '@ton-community/test-utils';
 import { compile } from '@ton-community/blueprint';
 import { buildNftCollectionDataCell } from '../wrappers/utils/collectionHelpers';
 import { randomAddress } from '@ton-community/test-utils';
+import { Opcodes } from '../wrappers/utils/opCodes';
 
 describe('NftDapp', () => {
     let code: Cell;
@@ -24,7 +25,7 @@ describe('NftDapp', () => {
             NftDapp.createFromConfig({
                 ownerAddress: owner.address,
                 nextCollectionIndex: 0,
-                collectionsDict: Dictionary.empty(Dictionary.Keys.Uint(256), Dictionary.Values.Address())
+                collectionsDict: Dictionary.empty(Dictionary.Keys.Uint(64), Dictionary.Values.Address())
             }, code)
         );
 
@@ -40,29 +41,39 @@ describe('NftDapp', () => {
 
     it('should mint collections and increase nextCollectionIndex', async () => {
 
+        console.log(nftDapp.address);
+
+        await blockchain.setVerbosityForAddress(nftDapp.address, {
+            print: true,
+            blockchainLogs: false,
+            debugLogs: false,
+            vmLogs: 'vm_logs'
+        });
+
         const collectionDataCell = buildNftCollectionDataCell({
             ownerAddress: owner.address,
             nextItemIndex: 0,
             collectionContent: '',
             commonContent: '',
-            nftItemCode: await compile('AdminNft'),
+            nftItemCode: await compile('OrderNFT'),
             royaltyParams: {
                 royaltyFactor: 12,
                 royaltyBase: 100,
-                royaltyAddress: randomAddress()
+                royaltyAddress: nftDapp.address
             },
         });
         
         const mintCollectionResult = await nftDapp.sendDeployCollectionMsg(owner.getSender(), {
-            collectionCode: await compile('AdminCollection'),
+            collectionCode: await compile('OrderCollection'),
             collectionData: collectionDataCell,
-            queryId: Date.now(),
+            queryId: 0,
         });
         
         expect(mintCollectionResult.transactions).toHaveTransaction({
             from: owner.address,
             to: nftDapp.address,
-            success: true
+            success: true,
+            outMessagesCount: 1
         });
         
        const nextCollectionIndex = await nftDapp.getNextCollectionIndex();

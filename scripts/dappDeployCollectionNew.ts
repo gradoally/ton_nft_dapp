@@ -28,7 +28,7 @@ export async function run(provider: NetworkProvider, args: string[]) {
     await nftDapp.sendDeployCollectionMsg(provider.sender(), {
         collectionCode: await compile('OrderCollection'),
         collectionData: collectionDataCell,
-        queryId: Date.now(),
+        queryId: 0,
     });
 
     sleep(3500);

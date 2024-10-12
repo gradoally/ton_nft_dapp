@@ -1,2 +1,0 @@
-int flag::regular() asm "0x10 PUSHINT";  ;; nobounce
-int flag::bounce() asm "0x18 PUSHINT";
